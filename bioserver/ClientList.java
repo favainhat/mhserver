@@ -65,6 +65,15 @@ public class ClientList {
         return null;
     }
     
+    // find a client by Session
+    public Client findClientBySession(String session) {
+        for(int i=0; i<clients.size(); i++) {
+            client = (Client) clients.get(i);
+            if(client.getsession().equals(session)) return client;
+        }
+        return null;
+    }
+    
     // find a client by its handle
     public Client findClientByHandle(byte[] handle) {
         byte[] clhand;
@@ -79,6 +88,70 @@ public class ClientList {
             } 
             if(clhand != null)
                 if(Arrays.equals(handle, clhand)) return client;
+        }
+        return null;
+    }
+    
+    // find a client by its name
+    public List<Client> findClientByName(byte[] name) {
+        List<Client> clList = new LinkedList();
+        byte[] clname;
+        if(name == null) return null;
+        for(int i=0; i<clients.size(); i++) {
+            client = (Client) clients.get(i);
+            try {
+                clname = client.getHNPair().getNickname();
+            } catch (Exception e) {
+                //TODO: for the moment we ignore the nullpointer execeptions, but we have to handle clientlist different!
+                clname = null;
+            } 
+            if(clname != null)
+                if(Arrays.equals(name, clname)) clList.add(client);
+        }
+        if(!clList.isEmpty()){
+            return clList;
+        }
+        return null;
+    }
+    
+    // find a client by its HR //temp
+    public List<Client> findClientByHR(int hr1, int hr2) {
+        List<Client> clList = new LinkedList();
+        byte[] status;
+        for(int i=0; i<clients.size(); i++) {
+            client = (Client) clients.get(i);
+            try {
+                status = client.getCharacterStat();
+            } catch (Exception e) {
+                //TODO: for the moment we ignore the nullpointer execeptions, but we have to handle clientlist different!
+                status = null;
+            } 
+            if(status != null)
+                if(status[1] >= hr1 && status[1]<= hr2) clList.add(client);
+        }
+        if(!clList.isEmpty()){
+            return clList;
+        }
+        return null;
+    }
+    
+        //find a client by its Weapon //temp
+    public List<Client> findClientByWeapon(int num) {
+        List<Client> clList = new LinkedList();
+        byte[] status;
+        for(int i=0; i<clients.size(); i++) {
+            client = (Client) clients.get(i);
+            try {
+                status = client.getCharacterStat();
+            } catch (Exception e) {
+                //TODO: for the moment we ignore the nullpointer execeptions, but we have to handle clientlist different!
+                status = null;
+            } 
+            if(status != null)
+                if(status[0] == num) clList.add(client);
+        }
+        if(!clList.isEmpty()){
+            return clList;
         }
         return null;
     }
@@ -152,6 +225,30 @@ public class ClientList {
         for(int i = 0; i<clients.size(); i++) {
             client = (Client) clients.get(i);
             if(client.getArea()==area && client.getRoom()==room && client.getSlot() == slotnr) {
+            //if(client.getArea()==area && client.getRoom()==room) {                
+                retval.put(client.getHNPair().getHNPair());
+                retval.putShort((short)client.getCharacterStats().length);
+                retval.put(client.getCharacterStats());
+            }
+        }
+
+        byte[] r = new byte[retval.position()];
+        retval.rewind();
+        retval.get(r);
+        return r;
+    }
+    
+    public byte[] getPlayerStats2(int area, int room) {
+        ByteBuffer retval = ByteBuffer.wrap(new byte[1024]);
+        
+        byte playercnt = (byte) (this.countPlayersInRoom(area, room) & 0xff);
+        retval.putShort((short) room);
+        retval.put((byte) 3);   // ???
+        retval.put(playercnt);
+        
+        for(int i = 0; i<clients.size(); i++) {
+            client = (Client) clients.get(i);
+            if(client.getArea()==area && client.getRoom()==room) {
                 retval.put(client.getHNPair().getHNPair());
                 retval.putShort((short)client.getCharacterStats().length);
                 retval.put(client.getCharacterStats());

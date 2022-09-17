@@ -61,12 +61,14 @@ public class Slot {
     public int betatest;
     
     private byte[] name;
+    private byte[] description;
     private byte status;
     private byte[] password;
     
     private byte protection;    // using password ?
-    private byte scenario;
-    private byte slottype;
+    private short scenario;
+    private short slottype;
+    private int questnum;
     
     // rules for the game in slot
     private RuleSet rules;
@@ -86,6 +88,7 @@ public class Slot {
         this.betatest = 0;
         
         this.name = "(free)".getBytes();
+        this.description = "".getBytes();
         this.status = Slot.STATUS_FREE;
         this.scenario = Slot.SCENARIO_TRAINING;
         this.slottype = Slot.LOAD_NOTSET;
@@ -96,6 +99,7 @@ public class Slot {
     
     public void reset() {
         this.name = "(free)".getBytes();
+        this.description = "".getBytes();
         this.status = Slot.STATUS_FREE;
         this.scenario = Slot.SCENARIO_TRAINING;
         this.slottype = Slot.LOAD_NOTSET;
@@ -111,6 +115,14 @@ public class Slot {
     
     public void setName(byte[] name) {
         this.name = name;
+    }
+    
+    public byte[] getDescription() {
+        return this.description;
+    }
+    
+    public void setDescription(byte[] description) {
+        this.description = description;
     }
     
     public byte[] getPassword() {
@@ -134,19 +146,19 @@ public class Slot {
         return this.protection;
     }
 
-    public byte getSscenario() {
+    public short getSscenario() {
         return this.scenario;
     }
 
-    public void setSscenario(byte scenario) {
+    public void setSscenario(short scenario) {
         this.scenario = scenario;
     }
 
-    public byte getSlotType() {
+    public short getSlotType() {
         return this.slottype;
     }
 
-    public void setSlotType(byte slottype) {
+    public void setSlotType(short slottype) {
         this.slottype = slottype;
     }
 

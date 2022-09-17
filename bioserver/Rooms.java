@@ -54,9 +54,30 @@ public class Rooms {
         return r.getStatus();
     }
     
+    
+    public void setStatus(int areanr, int roomnr, byte nr) {
+        Room r = (Room) rooms.get((areanr-1)*this.numberOfRooms + roomnr-1);
+        r.setStatus(nr);
+    }
+    
     public String getName(int areanr, int roomnr) {
         Room r = (Room) rooms.get((areanr-1)*this.numberOfRooms + roomnr-1);
         return r.getName();
+    }
+    
+    public void setName(int areanr, int roomnr, String name) {
+        Room r = (Room) rooms.get((areanr-1)*this.numberOfRooms + roomnr-1);
+        r.setName(name);
+    }
+    
+    public String getDesc(int areanr, int roomnr) {
+        Room r = (Room) rooms.get((areanr-1)*this.numberOfRooms + roomnr-1);
+        return r.getDescription();
+    }
+    
+    void setDesc(int areanr, int roomnr, String desc) {
+        Room r = (Room) rooms.get((areanr-1)*this.numberOfRooms + roomnr-1);
+        r.setDescription(desc);
     }
 
     public int getRoomCount() {

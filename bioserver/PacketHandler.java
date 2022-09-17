@@ -25,8 +25,10 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Process messages
@@ -97,7 +99,7 @@ class PacketHandler implements Runnable {
         this.gamenumber = 1;
         
         // setup patch
-        patch =  new Patch();
+        //patch =  new Patch();
 
         // setup areas, rooms, slots
         areas = new Areas();
@@ -162,6 +164,8 @@ class PacketHandler implements Runnable {
 
     // add a packet to the queue
     void addOutPacket(ServerThread server, SocketChannel socket, Packet packet) {
+        Logging.println("Sends");
+        Logging.printBuffer(packet.getPacketData()); //temp
         synchronized(queue) {
             queue.add(new ServerDataEvent(server, socket, packet.getPacketData()));
             queue.notify();
@@ -170,6 +174,8 @@ class PacketHandler implements Runnable {
     
     // broadcast a packet to all connected clients
     void broadcastPacket(ServerThread server, Packet packet) {
+        Logging.println("Sends");
+        Logging.printBuffer(packet.getPacketData()); //temp
         List cls = clients.getList();
         synchronized(queue) {
             for(int i=0; i<cls.size(); i++) {
@@ -183,6 +189,8 @@ class PacketHandler implements Runnable {
     
     // broadcast a packet to all clients in area and area selection, not in room or slot
     void broadcastInAreaNAreaSelect(ServerThread server, Packet packet, int area) {
+        Logging.println("Sends");
+        Logging.printBuffer(packet.getPacketData()); //temp
         synchronized(queue) {
             // who is the causing client ?
             List cls = clients.getList();
@@ -191,7 +199,8 @@ class PacketHandler implements Runnable {
             if(area > 0) {
                 for(int i=0; i<cls.size(); i++) {
                     Client cl = (Client) cls.get(i);
-                    if((cl.getArea() == area || cl.getArea() == 0) && cl.getRoom() == 0) {
+                    //if((cl.getArea() == area || cl.getArea() == 0) && cl.getRoom() == 0) {
+                    if((cl.getArea() == area || cl.getArea() == 0)) {
                         queue.add(new ServerDataEvent(server, cl.getSocket(), packet.getPacketData()));
                     }
                 }
@@ -204,6 +213,8 @@ class PacketHandler implements Runnable {
 
     // broadcast a packet to all clients in a certain area, not in room or slot or area selection
     void broadcastInArea(ServerThread server, Packet packet, int area) {
+        Logging.println("Sends");
+        Logging.printBuffer(packet.getPacketData()); //temp
         synchronized(queue) {
             // who is the causing client ?
             List cls = clients.getList();
@@ -212,7 +223,55 @@ class PacketHandler implements Runnable {
             if(area > 0) {
                 for(int i=0; i<cls.size(); i++) {
                     Client cl = (Client) cls.get(i);
-                    if(cl.getArea() == area && cl.getRoom() == 0) {
+                    //if(cl.getArea() == area && cl.getRoom() == 0) {
+                    if(cl.getArea() == area) {
+                        queue.add(new ServerDataEvent(server, cl.getSocket(), packet.getPacketData()));
+                    }
+                }
+            }
+
+            // at last notify the queue
+            queue.notify();
+        }
+    }
+    // broadcast a packet to all clients in a certain area, not in room or slot or area selection
+    void broadcastInAreaWithoutSender(ServerThread server, Packet packet, int area, Client clr) {
+        Logging.println("Sends");
+        Logging.printBuffer(packet.getPacketData()); //temp
+        synchronized(queue) {
+            // who is the causing client ?
+            List cls = clients.getList();
+
+            // broadcasting in area
+            if(area > 0) {
+                for(int i=0; i<cls.size(); i++) {
+                    Client cl = (Client) cls.get(i);
+                    //if(cl.getArea() == area && cl.getRoom() == 0) {
+                    if(cl.getArea() == area && cl != clr) {
+                        queue.add(new ServerDataEvent(server, cl.getSocket(), packet.getPacketData()));
+                    }
+                }
+            }
+
+            // at last notify the queue
+            queue.notify();
+        }
+    }
+
+    // broadcast a packet to all clients in room, not in gameslot, area or area selection
+    void broadcastInRoomWithoutSender(ServerThread server, Packet packet, int area, int room, Client clr) {
+        Logging.println("Sends");
+        Logging.printBuffer(packet.getPacketData()); //temp
+        synchronized(queue) {
+            // who is the causing client ?
+            List cls = clients.getList();
+            
+            // broadcasting in gameslot
+            if(room > 0) {
+                for(int i=0; i<cls.size(); i++) {
+                    Client cl = (Client) cls.get(i);
+                    //if(cl.getArea() == area && cl.getRoom() == room && cl.getSlot() == 0 && cl != clr) {                    
+                    if(cl.getArea() == area && cl.getRoom() == room && cl != clr) {
                         queue.add(new ServerDataEvent(server, cl.getSocket(), packet.getPacketData()));
                     }
                 }
@@ -225,6 +284,8 @@ class PacketHandler implements Runnable {
     
     // broadcast a packet to all clients in gameslots and same room, not in area or area selection
     void broadcastInRoomNArea(ServerThread server, Packet packet, int area, int room) {
+        Logging.println("Sends");
+        Logging.printBuffer(packet.getPacketData()); //temp
         synchronized(queue) {
             // who is the causing client ?
             List cls = clients.getList();
@@ -244,8 +305,12 @@ class PacketHandler implements Runnable {
         }
     }
     
+    //why exclude if slot is greater than 0?
     // broadcast a packet to all clients in room, not in gameslot, area or area selection
+    //Even If one received the quest but if not are in the game, must have to send a message.
     void broadcastInRoom(ServerThread server, Packet packet, int area, int room) {
+        Logging.println("Sends");
+        Logging.printBuffer(packet.getPacketData()); //temp
         synchronized(queue) {
             // who is the causing client ?
             List cls = clients.getList();
@@ -254,7 +319,8 @@ class PacketHandler implements Runnable {
             if(room > 0) {
                 for(int i=0; i<cls.size(); i++) {
                     Client cl = (Client) cls.get(i);
-                    if(cl.getArea() == area && cl.getRoom() == room && cl.getSlot() == 0) {
+                    //if(cl.getArea() == area && cl.getRoom() == room && cl.getSlot() == 0) {
+                    if(cl.getArea() == area && cl.getRoom() == room) {
                         queue.add(new ServerDataEvent(server, cl.getSocket(), packet.getPacketData()));
                     }
                 }
@@ -265,9 +331,11 @@ class PacketHandler implements Runnable {
         }
     }
     
-        
+
     // broadcast a packet to all clients in certain gameslot and their room, not to area or area selection or other slots
     void broadcastInSlotNRoom(ServerThread server, Packet packet, int area, int room, int slot) {
+        Logging.println("Sends");
+        Logging.printBuffer(packet.getPacketData()); //temp
         synchronized(queue) {
             // who is the causing client ?
             List cls = clients.getList();
@@ -289,6 +357,8 @@ class PacketHandler implements Runnable {
     
     // broadcast a packet to all clients in gameslot, not in room, area or area selection
     void broadcastInSlot(ServerThread server, Packet packet, int area, int room, int slot) {
+        Logging.println("Sends");
+        Logging.printBuffer(packet.getPacketData()); //temp
         synchronized(queue) {
             // who is the causing client ?
             List cls = clients.getList();
@@ -308,8 +378,33 @@ class PacketHandler implements Runnable {
         }
     }
     
+        // broadcast a packet to all clients in gameslot, not in room, area or area selection
+    void broadcastInSlotWithoutSender(ServerThread server, Packet packet, int area, int room, int slot, Client clr) {
+        Logging.println("Sends");
+        Logging.printBuffer(packet.getPacketData()); //temp
+        synchronized(queue) {
+            // who is the causing client ?
+            List cls = clients.getList();
+            
+            // broadcasting in gameslot
+            if(slot > 0) {
+                for(int i=0; i<cls.size(); i++) {
+                    Client cl = (Client) cls.get(i);
+                    if(cl.getArea() == area && cl.getRoom() == room && cl.getSlot() == slot && cl !=clr) {
+                        queue.add(new ServerDataEvent(server, cl.getSocket(), packet.getPacketData()));
+                    }
+                }
+            }
+
+            // at last notify the queue
+            queue.notify();
+        }
+    }
+    
     // broadcast a packet to all clients in aftergamelobby of gameslot
     void broadcastInAgl(ServerThread server, Packet packet, int gamenum) {
+        Logging.println("Sends");
+        Logging.printBuffer(packet.getPacketData()); //temp
         synchronized(queue) {
             // who is the causing client ?
             List cls = clients.getList();
@@ -349,8 +444,8 @@ class PacketHandler implements Runnable {
                         cl.connalive = false;
                         queue.add(new ServerDataEvent(server, cl.getSocket(), p.getPacketData()));
                     } else {
-                        // this client left us :-(
-                        this.removeClient(server, cl);
+                            // this client left us :-(
+                            this.removeClient(server, cl);
                     }
                 }
             }
@@ -442,8 +537,8 @@ class PacketHandler implements Runnable {
             if(gamenr > 0) {
                 // we are in meeting room then
                 // gamenumber not set yet because needed for broadcast packets in AGL!
-                cl.setArea(51);
-                db.updateClientOrigin(userid, STATUS_AGLOBBY, 51, 0, 0);
+                //cl.setArea(51);
+                //db.updateClientOrigin(userid, STATUS_AGLOBBY, 51, 0, 0);
             }
             
             return(true);
@@ -507,6 +602,8 @@ class PacketHandler implements Runnable {
         Packet p;
         byte[] chosen = new byte[8];
         HNPair hn = ps.getDecryptedHNpair();
+        //Logging.println("hn_nickname:" +new String(hn.getNickname()));
+        //Logging.println("hn_handle:" +new String(hn.getHandle()));
         
         // update client
         clients.findClient(socket).setHNPair(hn);
@@ -540,12 +637,17 @@ class PacketHandler implements Runnable {
         p = new Packet(Commands.UNKN6104, Commands.BROADCAST, Commands.SERVER, this.getNextPacketID());
         this.addOutPacket(server, socket, p);
     }
-        
+     
+    //<BODY><LF=6><CENTER>HELLO<LF=1></END>
     // sending the requested message of the day
     void sendMotheday(ServerThread server, SocketChannel socket, Packet ps) {
         //byte[] motd = {0};    // no message
-        MessageOfTheDay motd = new MessageOfTheDay(1, db.getMOTD());
-        
+        //MessageOfTheDay motd = new MessageOfTheDay(1, db.getMOTD());
+        String md = db.getMOTD();
+        if(md.isEmpty()){
+            md = "<BODY><LF=6><CENTER>HELLO<LF=1></END>";
+        }
+        MessageOfTheDay motd = new MessageOfTheDay(1, md);
         Packet p = new Packet(Commands.MOTHEDAY, Commands.TELL, Commands.SERVER, ps.getPacketID(), motd.getPacket());
         this.addOutPacket(server, socket, p);
     }
@@ -556,13 +658,34 @@ class PacketHandler implements Runnable {
         
         Packet p = new Packet(Commands.CHARSELECT, Commands.TELL, Commands.SERVER, ps.getPacketID());
         this.addOutPacket(server, socket, p);
+        broadcastCharSelect(server,socket);
+    }
+    
+    void broadcastCharSelect(ServerThread server, SocketChannel socket) {
+        ByteBuffer retval = ByteBuffer.wrap(new byte[1024]);
+        Client cl = clients.findClient(socket);
+        int area = cl.getArea();
+        int room = cl.getRoom();
+        retval.putShort((short) cl.getHNPair().getHandle().length);
+        retval.put(cl.getHNPair().getHandle());        
+        retval.putShort((short)cl.getCharacterStats().length);
+        retval.put(cl.getCharacterStats());
+
+        byte[] r = new byte[retval.position()];
+        retval.rewind();
+        retval.get(r);
+        Packet p = new Packet(0x6191, Commands.BROADCAST, Commands.SERVER, this.getNextPacketID(), r);
+        this.broadcastInRoom(server, p, area, room);
     }
 
     // this one sends the sizes of the following 6882 packets!
     // Currently this is file1 only    
     void send6881(ServerThread server, SocketChannel socket, Packet ps) {
-        byte[] datacount = {0x01, 0,0,0x12,0x5D};
-        
+        //byte[] datacount = {0x01, 0,0,0x12,0x5D};
+        byte[] datacount = {0x01, 0,0,0,0};
+        int len = Packet6882.getlen();
+        datacount[3] = (byte) ((len >> 8)&0xff);
+        datacount[4] = (byte) (len &0xff);
         Packet p = new Packet(Commands.UNKN6881, Commands.TELL, Commands.SERVER, ps.getPacketID(), datacount);
         this.addOutPacket(server, socket, p);
     }
@@ -578,11 +701,415 @@ class PacketHandler implements Runnable {
                      (((int)pl[6]<<16)&0x00FF0000) |
                      (((int)pl[7]<<8) &0x0000FF00) |
                      (((int)pl[8])    &0x000000FF);
-        byte[] data = Packet6881.getData(nr, offset, sizeL);
+        //byte[] data = Packet6881.getData(nr, offset, sizeL);
+        byte[] data = Packet6882.getData(nr, offset, sizeL);
         
         Packet p = new Packet(Commands.UNKN6882, Commands.TELL, Commands.SERVER, ps.getPacketID(), data);
         this.addOutPacket(server, socket, p);
     }
+    
+    //might size like 6881
+    void send6883(ServerThread server, SocketChannel socket, Packet ps) {
+        //byte[] datacount = {0x01, 0,0,0x12,0x5D,0,0,0,0};        
+        byte[] datacount = {0,0,0,0,0,0,0,0,0,0};
+        int len = Packet6882.getlen();
+        datacount[3] = (byte) ((len >> 8)&0xff);
+        datacount[4] = (byte) (len &0xff);
+        Packet p = new Packet(Commands.UNKN6883, Commands.TELL, Commands.SERVER, ps.getPacketID(), datacount);
+        this.addOutPacket(server, socket, p);
+    }
+    
+    void send670f(ServerThread server, SocketChannel socket, Packet ps) {
+        int nr = ps.getPayload()[0];
+        //Client cl = clients.findClient(socket);
+        //cl.setArea(nr);
+      
+        Packet p = new Packet(Commands.UNKN670f, Commands.TELL, Commands.SERVER, ps.getPacketID());
+        this.addOutPacket(server, socket, p);        
+    }
+    
+    //plaza exit
+    void send6306(ServerThread server, SocketChannel socket, Packet ps) {
+        Client cl = clients.findClient(socket);
+        Packet p = new Packet(Commands.UNKN6306, Commands.TELL, Commands.SERVER, ps.getPacketID());
+        this.addOutPacket(server, socket, p);        
+        int area = cl.getArea();
+        cl.setArea(0);
+        db.updateClientOrigin(cl.getUserID(), STATUS_LOBBY, 0, 0, 0);
+        this.broadcastAreaPlayerCnt(server, socket, area);
+    }
+    
+    //notify plaza
+    void broadcastPlazaRemove(ServerThread server, SocketChannel socket) {
+        ByteBuffer retval = ByteBuffer.wrap(new byte[1024]);
+        Client cl = clients.findClient(socket);
+        int area = cl.getArea();
+        int room = cl.getRoom();
+        byte[] s = "<BODY><LF=6><CENTER>Area Remove<LF=1></END>".getBytes();
+        retval.putShort((short) s.length);
+        retval.put(cl.getHNPair().getHandle());        
+
+        byte[] r = new byte[retval.position()];
+        retval.rewind();
+        retval.get(r);
+        Packet p = new Packet(0x6307, Commands.BROADCAST, Commands.SERVER, this.getNextPacketID(), r);
+        //this.broadcastInRoom(server, p, area, room);
+        this.broadcastInArea(server, p, area);
+    }
+    
+    void send640d(ServerThread server, SocketChannel socket, Packet ps) {
+        int slotnr = ps.getNumber();
+        Client cl = clients.findClient(socket);
+        int area = cl.getArea();
+        int room = cl.getRoom();
+
+        byte[] description;
+        description = slots.getDescription(area, room, slotnr);
+        ByteBuffer broadcast = ByteBuffer.wrap(new byte[1024]);
+        broadcast.putShort((short)slotnr);
+        broadcast.putShort((short) description.length);
+        broadcast.put(description);
+        
+        byte[] r = new byte[broadcast.position()];
+        broadcast.rewind();
+        broadcast.get(r);
+        Packet p = new Packet(Commands.UNKN640d, Commands.TELL, Commands.SERVER, ps.getPacketID(), r);
+        this.addOutPacket(server, socket, p); 
+    }
+    
+        void send6890(ServerThread server, SocketChannel socket, Packet ps) {
+        int sec = (int) (new Date().getTime()/1000);
+        ByteBuffer r = ByteBuffer.wrap(new byte[4]);
+        r.putInt(sec);
+        byte[] time = r.array();
+        Packet p = new Packet(Commands.UNKN6890, Commands.TELL, Commands.SERVER, ps.getPacketID(), time);
+        this.addOutPacket(server, socket, p);
+        }
+        
+        void send6144(ServerThread server, SocketChannel socket, Packet ps) {
+        byte[] time = {0,0,0,1};    // no message
+        Packet p = new Packet(Commands.UNKN6144, Commands.TELL, Commands.SERVER, ps.getPacketID(), time);
+        this.addOutPacket(server, socket, p);
+        }
+        
+        //server name!!!
+        void send68c0(ServerThread server, SocketChannel socket, Packet ps) {
+        ps.getDecryptedString();
+        byte[] handle ="test".getBytes();
+        ByteBuffer mess = ByteBuffer.wrap(new byte[handle.length+2]);
+        mess.putShort((short) handle.length);
+        mess.put(handle);
+        Packet p = new Packet(Commands.UNKN68c0, Commands.TELL, Commands.SERVER, ps.getPacketID(), mess.array());
+        this.addOutPacket(server, socket, p);
+        }
+        
+        //season? 
+        //seems buggy
+        //should I broadcast 6892 with timer to sync players time?
+        void send6892(ServerThread server, SocketChannel socket, Packet ps) {
+
+        ByteBuffer retval = ByteBuffer.wrap(new byte[1024]);
+        int sec = (int) (new Date().getTime()/1000);
+        int inteval  = 6000;
+        //retval.putInt(sec%inteval); //current time?
+        retval.putInt(sec); //current time?
+        retval.putInt(inteval); //total length? tick count?
+        retval.putInt(3); //how many days to change season? (unk)
+        retval.putInt((int)(((sec%inteval*1.0)/inteval)*3)); //current season (0 = oragne, 1 = blue, 2 = green)?
+        retval.putInt(0); //unk
+        byte[] r = new byte[retval.position()];
+        retval.rewind();
+        retval.get(r);
+            Packet p = new Packet(Commands.UNKN6892, Commands.TELL, Commands.SERVER, ps.getPacketID(), r);
+        this.addOutPacket(server, socket, p);
+        }
+        
+        //more analysing need
+        //wrong!!!
+        void send6884(ServerThread server, SocketChannel socket, Packet ps) {
+
+        byte nr = ps.getPayload()[0];
+        byte[] str ="".getBytes();
+        //byte[] str ="".getBytes();
+        ByteBuffer broadcast = ByteBuffer.wrap(new byte[1024]);
+        //broadcast.put(nr);
+        //broadcast.putShort((short) str.length);
+        //broadcast.put(str);
+        
+        //broadcast.put(nr);
+        for(int i= 0; i< 0x10 ;i++){
+        broadcast.put((byte)i);
+        broadcast.putShort((short) str.length);
+        broadcast.put(str);
+        }
+        
+        byte[] r = new byte[broadcast.position()];
+        broadcast.rewind();
+        broadcast.get(r);
+        Packet p = new Packet(Commands.UNKN6884, Commands.TELL, Commands.SERVER, ps.getPacketID(), r);
+        this.addOutPacket(server, socket, p);
+        }
+        
+        void send620b(ServerThread server, SocketChannel socket, Packet ps) {
+        byte[] retval = {0,0,0};    // no message
+        int nr = ps.getNumber();
+        retval[0] = (byte) ((nr >> 8)&0xff);
+        retval[1] = (byte) (nr &0xff);
+        retval[2] = (byte) 0;
+        Packet p = new Packet(Commands.UNKN620b, Commands.TELL, Commands.SERVER, ps.getPacketID(), retval);
+        this.addOutPacket(server, socket, p);
+        }
+        
+        void send631b(ServerThread server, SocketChannel socket, Packet ps) {
+        //16 -> area num?
+        //8 ->unk
+        //8 ->unk
+        //8 ->unk
+        //8 ->unk
+        byte[] retval = {0,0,0,0,0,0};    // no message
+        int nr = ps.getNumber();
+        retval[0] = (byte) ((nr >> 8)&0xff);
+        retval[1] = (byte) (nr &0xff);
+        Packet p = new Packet(Commands.UNKN631b, Commands.TELL, Commands.SERVER, ps.getPacketID(), retval);
+        this.addOutPacket(server, socket, p);
+        }
+        
+        //  unk
+        void send6312(ServerThread server, SocketChannel socket, Packet ps) {
+        //8 ->num
+        //16 ->unk?
+        byte[] retval = {0,0,0};    // no message
+        retval[1] = ps.getPayload()[0];
+        retval[2] = ps.getPayload()[1];
+        Packet p = new Packet(Commands.UNKN6312, Commands.TELL, Commands.SERVER, ps.getPacketID(), retval);
+        this.addOutPacket(server, socket, p);
+        }
+        //  unk
+        void send6313(ServerThread server, SocketChannel socket, Packet ps) {
+        //8 ->num
+        //16 ->unk?
+        byte[] retval = {0,0,0};    // no message
+        retval[1] = ps.getPayload()[0];
+        retval[2] = ps.getPayload()[1];
+        Packet p = new Packet(Commands.UNKN6313, Commands.TELL, Commands.SERVER, ps.getPacketID(), retval);
+        this.addOutPacket(server, socket, p);
+        }
+        
+        // unk
+        void send6314(ServerThread server, SocketChannel socket, Packet ps) {
+        //8 ->num
+        //16 ->unk?
+        byte[] retval = {0,0,0};    // no message
+        retval[1] = ps.getPayload()[0];
+        retval[2] = ps.getPayload()[1];
+        Packet p = new Packet(Commands.UNKN6314, Commands.TELL, Commands.SERVER, ps.getPacketID(), retval);
+        this.addOutPacket(server, socket, p);
+        }
+        
+        //quest related?
+        //quest name/desc get from all?
+        void send650c(ServerThread server, SocketChannel socket, Packet ps) {
+        //16 ->nr?
+        //string -> unk
+        int nr = ps.getNumber();
+        Client cl = clients.findClient(socket);
+        int area = cl.getArea();
+        int room = cl.getRoom();
+        Slot slot = slots.getSlot(area, room, nr);
+        byte str[] = slot.getDescription();
+        ByteBuffer retval = ByteBuffer.wrap(new byte[1024]);
+        retval.putShort((short)nr); //temp value
+        retval.putShort((short)str.length);
+        retval.put(str);
+        byte[] r = new byte[retval.position()];
+        retval.rewind();
+        retval.get(r);
+        Packet p = new Packet(Commands.UNKN650c, Commands.TELL, Commands.SERVER, ps.getPacketID(), r);
+        this.addOutPacket(server, socket, p);
+        }
+        
+        //quest related?
+        //quest name/desc set for quests?
+        //assum slot desc.. should I make new field to slots?
+        void send650b(ServerThread server, SocketChannel socket, Packet ps) {
+        //16 ->nr?
+        //string -> unk
+        byte[] temp = ps.getDecryptedString();
+        Client cl = clients.findClient(socket);
+        int area = cl.getArea();
+        int room = cl.getRoom();
+        int slotnr = cl.getSlot();
+        Slot slot = slots.getSlot(area, room, slotnr);
+        slot.setDescription(temp);
+        Packet p = new Packet(Commands.UNKN650b, Commands.TELL, Commands.SERVER, ps.getPacketID());
+        this.addOutPacket(server, socket, p);
+        }
+        
+        
+    void send6148(ServerThread server, SocketChannel socket, Packet ps) {
+        byte[] time = {0};
+        Packet p = new Packet(Commands.UNKN6148, Commands.TELL, Commands.SERVER, ps.getPacketID(), time);
+        this.addOutPacket(server, socket, p);
+    }
+
+    
+
+     //sends
+     //SetSendData16
+    //SetSendStringData (unencrypted string? - without length?)
+    //recv 
+    //none
+    void send6139(ServerThread server, SocketChannel socket, Packet ps) {
+        //SetSendData16
+        int nr = ps.getNumber(); //quest num
+        //unk
+        Packet p = new Packet(Commands.UNKN6139, Commands.TELL, Commands.SERVER, ps.getPacketID());
+        this.addOutPacket(server, socket, p);
+    }
+    
+    //room desc set if room status  = 1?
+    void send6310(ServerThread server, SocketChannel socket, Packet ps) {
+        Client cl = clients.findClient(socket);
+        int area = cl.getArea();
+        int nr = ps.getNumber();
+        //rooms.setStatus(area,nr,Room.STATUS_INCREATE);
+        Packet p = new Packet(Commands.UNKN6310, Commands.TELL, Commands.SERVER, ps.getPacketID());
+        this.addOutPacket(server, socket, p);
+    }
+
+    // helper function
+    private byte calc_shift(byte i, byte p) {
+        byte[] fixval = {  21,   23,   10,   17,   23,   19,    6,   13};
+        byte[] masks  = {0x33, 0x30, 0x3c, 0x34, 0x2d, 0x30, 0x3c, 0x34};
+        return(byte) (fixval[i&7] - (i&(byte)0xf8) - p + ((p - 9 + i)&masks[i&7])*2);
+    }
+    private int decryptBuff(byte[] b, int offset,int pid) {
+        int mlen = ((((int)b[offset]&0xff) << 8)|((int)b[offset+1]&0xff)) -2;
+        for(int i=0; i<mlen; i++) b[offset+4+i] = (byte) (b[offset+4+i] ^ calc_shift((byte)i, (byte)(pid & (byte)0xff)));
+        return mlen;
+    }
+    
+    //temp not working
+    void send6149(ServerThread server, SocketChannel socket, Packet ps) {
+        byte[] retval = {0};    // no message
+        int offset =0;
+        int nr = ps.getNumber();
+        offset +=2;
+        byte[] pl = ps.getPayload();
+        byte[] pt = pl.clone();
+        int len = decryptBuff(pt, offset, ps.getPacketID());
+        byte[] temp = new byte[len];
+        System.arraycopy(pt, 4+offset, temp, 0, len);
+        offset += 4+len;
+        Logging.println(new String(temp));
+        Packet p = new Packet(Commands.UNKN6149, Commands.TELL, Commands.SERVER, ps.getPacketID(), retval);
+        this.addOutPacket(server, socket, p);
+    }
+    void send660f(ServerThread server, SocketChannel socket, Packet ps) {
+        byte[] permit = {1};    // no message
+        Packet p = new Packet(Commands.UNKN660f, Commands.TELL, Commands.SERVER, ps.getPacketID(), permit);
+        this.addOutPacket(server, socket, p);
+    }
+    
+    //not work bad stub?
+    void send614d(ServerThread server, SocketChannel socket, Packet ps) {
+        //GetRecvData16(0x894d60,0x8f8ea0);
+        //GetRecvDataString(DAT_00894d58,0x8f8ea0);
+        //byte[] str = "Test string".getBytes();
+        byte[] str = "".getBytes();
+        ByteBuffer retval = ByteBuffer.wrap(new byte[1024]);
+        retval.putShort((short)0); //temp value
+        retval.putShort((short)str.length);
+        retval.put(str);
+        byte[] r = new byte[retval.position()];
+        retval.rewind();
+        retval.get(r);
+        Packet p = new Packet(Commands.UNKN614d, Commands.TELL, Commands.SERVER, ps.getPacketID(), r);
+        this.addOutPacket(server, socket, p);
+    }
+    
+   void send68a0(ServerThread server, SocketChannel socket, Packet ps) {
+        byte[] retval = {0,0,0,0,0};
+        Packet p = new Packet(Commands.UNKN68a0, Commands.TELL, Commands.SERVER, ps.getPacketID(), retval);
+        this.addOutPacket(server, socket, p);
+    }
+   
+   void send68a1(ServerThread server, SocketChannel socket, Packet ps) {
+       
+       byte[] name = "Testgame".getBytes();
+      
+        byte[] retval = new byte[name.length + 2];
+        retval[0] = (byte) ((name.length >> 8)&0xff);
+        retval[1] = (byte) (name.length &0xff);
+        System.arraycopy(name, 0, retval, 2, name.length);
+        Packet p = new Packet(Commands.UNKN68a1, Commands.TELL, Commands.SERVER, ps.getPacketID(), retval);
+        this.addOutPacket(server, socket, p);
+    }
+   
+   //current place
+   //first ploblem area, room, slot are 0 if return from quest
+   //second if entered with this, doesn't send broadcastRoomPlayerComing
+   void send6891(ServerThread server, SocketChannel socket, Packet ps) {
+       
+       Client cl = clients.findClient(socket);
+       int area = cl.getArea();
+       int room = cl.getRoom();
+       int slot = cl.getSlot(); 
+       /*
+       area = 2;
+       room = 3;
+       slot = 0; 
+       */
+       cl.setArea(area);
+       cl.setRoom(room);
+       cl.setSlot(0);
+       byte[] retval = {0,0,0,0,0,0};    // no message
+       retval[0] = (byte)((area >> 8) & 0xff);
+       retval[1] = (byte)(area & 0xff);
+       retval[2] = (byte)((room >> 8) & 0xff);
+       retval[3] = (byte)(room & 0xff);
+       retval[4] = (byte)((slot >> 8) & 0xff);
+       retval[5] = (byte)(slot & 0xff);
+        Packet p = new Packet(Commands.UNKN6891, Commands.TELL, Commands.SERVER, ps.getPacketID(), retval);
+        this.addOutPacket(server, socket, p);
+    }
+    
+   //area player count? seems not //unk
+    void send630d(ServerThread server, SocketChannel socket, Packet ps) {
+       int nr = ps.getNumber();
+       ByteBuffer retval = ByteBuffer.wrap(new byte[1024]);
+       //int[] cnt = clients.countPlayersInArea(nr); 
+       retval.putShort((short)nr);
+  
+        retval.putInt(0); //area only player?    
+        
+        byte[] r = new byte[retval.position()];
+        retval.rewind();
+        retval.get(r);        
+        Packet p = new Packet(Commands.UNKN630d, Commands.TELL, Commands.SERVER, ps.getPacketID(), r);
+        this.addOutPacket(server, socket, p);
+    }
+
+    //might quest slot attribute?
+    void send6415(ServerThread server, SocketChannel socket, Packet ps) {
+        byte b[] = ps.getPayload();
+        int nr = (((int)ps.getPayload()[0] << 8)|((int)ps.getPayload()[1]));
+        Packet p = new Packet(Commands.UNKN6415, Commands.TELL, Commands.SERVER, ps.getPacketID());
+        this.addOutPacket(server, socket, p);
+    }
+
+    
+    void send630a(ServerThread server, SocketChannel socket, Packet ps) {
+        Client cl = clients.findClient(socket);
+        int area = cl.getArea();
+        int room = (((int)ps.getPayload()[0] << 8)|((int)ps.getPayload()[1])); // skip the sum
+
+        byte [] playerstats = clients.getPlayerStats2(area, room);
+        Packet p = new Packet(Commands.UNKN630a, Commands.TELL, Commands.SERVER, ps.getPacketID(), playerstats);
+        this.addOutPacket(server, socket, p); 
+    }
+   
+     
     
     // request player rankings per area
     // for the moment we are sending the same (empty) rankings for every area
@@ -654,29 +1181,38 @@ class PacketHandler implements Runnable {
         byte[] areaplayercount = {0,0, 0,0, 0,0, (byte)0xff,(byte)0xff, 0,0};
         int[] cnt = clients.countPlayersInArea(nr);
         cnt[2] = cnt[2] + clients.countPlayersInRoom(51, 0) + this.gameserverpackethandler.countInGamePlayers();    // TODO: check it
+        int maxplayer = 200; // todo: move to proper position
         areaplayercount[0] = (byte) ((nr >> 8)&0xff);
         areaplayercount[1] = (byte) (nr &0xff);
         areaplayercount[2] = (byte) ((cnt[0] >> 8)&0xff);
         areaplayercount[3] = (byte) (cnt[0] &0xff);
         areaplayercount[4] = (byte) ((cnt[1] >> 8)&0xff);
         areaplayercount[5] = (byte) (cnt[1] &0xff);
+        areaplayercount[6] = (byte) ((maxplayer >> 8)&0xff);
+        areaplayercount[7] = (byte) (maxplayer &0xff);
         areaplayercount[8] = (byte) ((cnt[2] >> 8)&0xff);
         areaplayercount[9] = (byte) (cnt[2] &0xff);
         
         Packet p = new Packet(Commands.AREAPLAYERCNT, Commands.BROADCAST, Commands.SERVER, this.getNextPacketID(), areaplayercount);
-        this.broadcastInAreaNAreaSelect(server, p, nr);
+        //this.broadcastInAreaNAreaSelect(server, p, nr);
+        //this.broadcastInAreaNAreaSelect(server, p, nr);
+        this.broadcastPacket(server,p);
     }
     
     void sendAreaPlayercnt(ServerThread server, SocketChannel socket, Packet ps) {
         byte[] areaplayercount = {0,0, 0,0, 0,0, (byte)0xff,(byte)0xff, 0,0};
         int nr = ps.getNumber();
+        Client cl = clients.findClient(socket);
         int[] cnt = clients.countPlayersInArea(nr);
+        int maxplayer = 200; // todo: move to proper position
         areaplayercount[0] = (byte) ((nr >> 8)&0xff);
         areaplayercount[1] = (byte) (nr &0xff);
         areaplayercount[2] = (byte) ((cnt[0] >> 8)&0xff);
         areaplayercount[3] = (byte) (cnt[0] &0xff);
         areaplayercount[4] = (byte) ((cnt[1] >> 8)&0xff);
         areaplayercount[5] = (byte) (cnt[1] &0xff);
+        areaplayercount[6] = (byte) ((maxplayer >> 8)&0xff);
+        areaplayercount[7] = (byte) (maxplayer &0xff);
         areaplayercount[8] = (byte) ((cnt[2] >> 8)&0xff);
         areaplayercount[9] = (byte) (cnt[2] &0xff);
         
@@ -741,6 +1277,7 @@ class PacketHandler implements Runnable {
     void sendRoomsCount(ServerThread server, SocketChannel socket, Packet ps) {
         byte[] retval = {0,0};
         int nr = rooms.getRoomCount();
+        //int nr = 0; //temp for dos stub for !!!! Temporarily set to make as if room is zero because there is a problem with the room packet in DOS
         retval[0] = (byte) ((nr >> 8)&0xff);
         retval[1] = (byte) (nr &0xff);
         Packet p = new Packet(Commands.ROOMSCOUNT, Commands.TELL, Commands.SERVER, ps.getPacketID(), retval);
@@ -760,6 +1297,9 @@ class PacketHandler implements Runnable {
         cnt = this.gameserverpackethandler.countInGamePlayers() + clients.countPlayersInRoom(51, 0);    // TODO: agl counting room specific
         retval[4] = (byte)((cnt >> 8)& 0xff);
         retval[5] = (byte)(cnt & 0xff);
+        int maxplayer = 10; // todo: move to proper position
+        retval[6] = (byte) ((maxplayer >> 8)&0xff);
+        retval[7] = (byte) (maxplayer &0xff);
         Packet p = new Packet(Commands.ROOMPLAYERCNT, Commands.TELL, Commands.SERVER, ps.getPacketID(), retval);
         this.addOutPacket(server, socket, p);
     }
@@ -774,8 +1314,31 @@ class PacketHandler implements Runnable {
         cnt = this.gameserverpackethandler.countInGamePlayers() + clients.countPlayersInRoom(51, 0);    // TODO: agl counting room specific
         retval[4] = (byte)((cnt >> 8)& 0xff);
         retval[5] = (byte)(cnt & 0xff);
+        int maxplayer = 10; // todo: move to proper position
+        retval[6] = (byte) ((maxplayer >> 8)&0xff);
+        retval[7] = (byte) (maxplayer &0xff);
         Packet p = new Packet(Commands.ROOMPLAYERCNT, Commands.BROADCAST, Commands.SERVER, this.getNextPacketID(), retval);
         this.broadcastInArea(server, p, area);
+    }
+    
+    void broadcastRoomPlayerComing(ServerThread server, SocketChannel socket) {
+        ByteBuffer retval = ByteBuffer.wrap(new byte[1024]);
+        Client cl = clients.findClient(socket);
+        int area = cl.getArea();
+        int room = cl.getRoom();
+        byte[] status = cl.getCharacterStat();
+        Packet p = new Packet(0x6411, Commands.BROADCAST, Commands.SERVER, this.getNextPacketID(), status);
+        this.broadcastInRoomWithoutSender(server, p, area,room,cl);
+    }
+    
+    void broadcastLeaveRoom(ServerThread server, SocketChannel socket) {
+        ByteBuffer retval = ByteBuffer.wrap(new byte[1024]);
+        Client cl = clients.findClient(socket);
+        int area = cl.getArea();
+        int room = cl.getRoom();
+        byte[] status = cl.getCharacterStat();
+        Packet p = new Packet(0x6410, Commands.BROADCAST, Commands.SERVER, this.getNextPacketID(), status);
+        this.broadcastInRoomWithoutSender(server, p, area,room,cl);
     }
 
     void sendRoomStatus(ServerThread server, SocketChannel socket, Packet ps) {
@@ -804,13 +1367,33 @@ class PacketHandler implements Runnable {
         Packet p = new Packet(Commands.ROOMNAME, Commands.TELL, Commands.SERVER, ps.getPacketID(), retval);
         this.addOutPacket(server, socket, p);
     }
-            
+    
+    /*
     void send6308(ServerThread server, SocketChannel socket, Packet ps) {
         byte[] retval = {0x00,0x01, 0x00,0x02, (byte)0x81,0x40};
         retval[0] = ps.getPayload()[0];
         retval[1] = ps.getPayload()[1];
         Packet p = new Packet(Commands.UNKN6308, Commands.TELL, Commands.SERVER, ps.getPacketID(), retval);
         this.addOutPacket(server, socket, p);        
+    }
+    */
+    
+    // request room description just like roomname?
+    //also broadcast needed?
+    void send6308(ServerThread server, SocketChannel socket, Packet ps) {
+        int nr = ps.getNumber();
+        Client cl = clients.findClient(socket);
+        int area = cl.getArea();
+        String roomdesc = rooms.getDesc(area,nr);
+        ByteBuffer retval = ByteBuffer.wrap(new byte[1024]);
+        retval.putShort((short) nr);
+        retval.putShort((short) roomdesc.getBytes().length);
+        retval.put(roomdesc.getBytes());
+        byte[] r = new byte[retval.position()];
+        retval.rewind();
+        retval.get(r);
+        Packet p = new Packet(Commands.UNKN6308, Commands.TELL, Commands.SERVER, ps.getPacketID(), r);
+        this.addOutPacket(server, socket, p);
     }
     
     void sendEnterRoom(ServerThread server, SocketChannel socket, Packet ps) {
@@ -826,6 +1409,7 @@ class PacketHandler implements Runnable {
         this.addOutPacket(server, socket, p);
         
         this.broadcastRoomPlayerCnt(server, area, room);
+        this.broadcastRoomPlayerComing(server,socket);
     }
 
     void sendSlotCount(ServerThread server, SocketChannel socket, Packet ps) {
@@ -894,14 +1478,8 @@ class PacketHandler implements Runnable {
         int room = cl.getRoom();
 
         byte[] slotname;
-        // character test slot
-        if(area == 0x002 && room == 0x001 && slotnr == 0x003) {
-            slotname = "Testgame".getBytes();
-        }
-        else {
-            slotname = slots.getName(area, room, slotnr);
-        }
-        
+
+        slotname = slots.getName(area, room, slotnr);
         byte[] retval = new byte[slotname.length + 4];
         retval[0] = (byte) ((slotnr >> 8)&0xff);
         retval[1] = (byte) (slotnr &0xff);
@@ -913,6 +1491,7 @@ class PacketHandler implements Runnable {
     }
     
     void broadcastSlotAttrib2(ServerThread server, int area, int room, int slot) {
+        ///*
         byte[] retval = {0,1,   // slotnr 
                          0,4,   // max players for slot
                          0,4, 
@@ -926,9 +1505,11 @@ class PacketHandler implements Runnable {
         // TODO: what do these attributes mean? extend slots get/set with those
         Packet p = new Packet(Commands.SLOTATTRIB2, Commands.BROADCAST, Commands.SERVER, this.getNextPacketID(), retval);
         this.broadcastInSlotNRoom(server, p, area, room, slot);
+
     }
 
     void sendSlotAttrib2(ServerThread server, SocketChannel socket, Packet ps) {
+        ///*
         byte[] retval = {0,1,   // slotnr 
                          0,4,   // max players for slot
                          0,4, 
@@ -978,8 +1559,15 @@ class PacketHandler implements Runnable {
         int room = cl.getRoom();
         retval[0] = (byte) ((slotnr >> 8)&0xff);
         retval[1] = (byte) (slotnr &0xff);
-        retval[3] = slots.getSlotType(area, room, slotnr);
-        retval[5] = slots.getScenario(area, room, slotnr);
+        //retval[3] = slots.getSlotType(area, room, slotnr);
+       // retval[5] = slots.getScenario(area, room, slotnr);   
+        short slottype = slots.getSlotType(area, room, slotnr);
+        short Scenetype = slots.getScenario(area, room, slotnr);   
+        retval[2] = (byte) ((slottype >> 8)&0xff);
+        retval[3] = (byte) (slottype &0xff);
+        retval[4] = (byte) ((Scenetype >> 8)&0xff);
+        retval[5] = (byte) (Scenetype &0xff);
+        
         Packet p = new Packet(Commands.SLOTSCENTYPE, Commands.TELL, Commands.SERVER, ps.getPacketID(), retval);
         this.addOutPacket(server, socket, p);        
     }
@@ -988,8 +1576,14 @@ class PacketHandler implements Runnable {
         byte[] retval = {0,0, 0,0, 0,0};
         retval[0] = (byte) ((slot >> 8)&0xff);
         retval[1] = (byte) (slot &0xff);
-        retval[3] = slots.getSlotType(area, room, slot);
-        retval[5] = slots.getScenario(area, room, slot);
+        //retval[3] = slots.getSlotType(area, room, slot);
+       // retval[5] = slots.getScenario(area, room, slot);    
+        short slottype = slots.getSlotType(area, room, slot);
+        short Scenetype = slots.getScenario(area, room, slot);   
+        retval[2] = (byte) ((slottype >> 8)&0xff);
+        retval[3] = (byte) (slottype &0xff);
+        retval[4] = (byte) ((Scenetype >> 8)&0xff);
+        retval[5] = (byte) (Scenetype &0xff);
         Packet p = new Packet(Commands.SLOTSCENTYPE, Commands.BROADCAST, Commands.SERVER, this.getNextPacketID(), retval);
         this.broadcastInSlotNRoom(server, p, area, room, slot);
     }
@@ -1115,25 +1709,10 @@ class PacketHandler implements Runnable {
         Client cl = clients.findClient(socket);
         int area = cl.getArea();
         int room = cl.getRoom();
-        int slot = ps.getNumber();            // slotnumber
+        int slot = cl.getSlot();
+        int nr = ps.getNumber();            // slotnumber
         byte [] playerstats = clients.getPlayerStats(area, room, slot);
-
-        // small character test slot!
-        short off;
-        if(area == 0x002 && room == 0x001 && slot == 0x003) {
-            byte c = playerstats[3];
-            int ptr = 4;
-            for(int t=0; t<c; t++) {
-                off = (short) playerstats[ptr+1];
-                ptr = ptr + 2 + off;    // handle
-                off = (short) playerstats[ptr+1];
-                ptr = ptr + 2 + off;    // nickname
-                off = (short) (((short) playerstats[ptr+1]) & 0x00ff);
-                ptr = ptr + 2 + off;    // statistics
-                playerstats[ptr - 8] = (byte) 0xff; //0x6a;    // dummy value
-            }
-        }
-        
+                
         Packet p = new Packet(Commands.PLAYERSTATS, Commands.TELL, Commands.SERVER, ps.getPacketID(), playerstats);
         this.addOutPacket(server, socket, p); 
     }
@@ -1143,19 +1722,28 @@ class PacketHandler implements Runnable {
         Client cl = clients.findClient(socket);
         int area = cl.getArea();
         int room = cl.getRoom();
+        this.broadcastLeaveRoom(server,socket);
         cl.setRoom(0);
         db.updateClientOrigin(cl.getUserID(), STATUS_LOBBY, area, 0, 0);
         
         Packet p = new Packet(Commands.EXITSLOTLIST, Commands.TELL, Commands.SERVER, ps.getPacketID());
         this.addOutPacket(server, socket, p);
-        
         this.broadcastRoomPlayerCnt(server, area, room);
     }
-    
+    //seems not exit area. but select area?
     void sendExitArea(ServerThread server, SocketChannel socket, Packet ps) {
         int nr = clients.findClient(socket).getArea();
         Client cl = clients.findClient(socket);
-        cl.setArea(0);
+        
+        //cl.setArea(0);
+        byte[] pay = ps.getPayload();
+        int area = (((int)ps.getPayload()[0] << 8)|((int)ps.getPayload()[1])); // skip the sum
+        int room = (((int)ps.getPayload()[2] << 8)|((int)ps.getPayload()[3])); // skip the sum
+        int slot = (((int)ps.getPayload()[4] << 8)|((int)ps.getPayload()[5])); // skip the sum
+
+        cl.setArea(area);
+        cl.setRoom(room);
+        cl.setRoom(slot);
         db.updateClientOrigin(cl.getUserID(), STATUS_LOBBY, 0, 0, 0);
         
         Packet p = new Packet(Commands.EXITAREA, Commands.TELL, Commands.SERVER, ps.getPacketID());
@@ -1163,8 +1751,10 @@ class PacketHandler implements Runnable {
 
         // let other clients know in area selection screen and area
         this.broadcastAreaPlayerCnt(server, socket, nr);
+        this.broadcastAreaPlayerCnt(server, socket, area);
     }
-    
+
+   
     // These are the chat packages
     // chatting is shifted by client, server sends cleartext
     void broadcastChatOut(ServerThread server, SocketChannel socket, Packet ps) {
@@ -1180,7 +1770,6 @@ class PacketHandler implements Runnable {
         
         // copy message and save to database
         byte[] mess = ps.getChatOutData();
-
         broadcast.putShort((short) mess.length);
         broadcast.put(mess);
 //        retval.put((byte)0x04); // not working in area 
@@ -1192,12 +1781,92 @@ class PacketHandler implements Runnable {
         broadcast.get(r);
 
         Packet p = new Packet(Commands.CHATOUT,Commands.BROADCAST, Commands.SERVER, this.getNextPacketID(), r);
+        /*
         if(slot > 0) {
             this.broadcastInSlot(server, p, area, room, slot);
         } else if(area != 0 && area != 51){
             this.broadcastInArea(server, p, area);
         } else if(cl.gamenumber > 0) {
             this.broadcastInAgl(server, p, cl.gamenumber);
+        }
+        */
+        if(area != 0 && area != 51 && room == 0){
+            this.broadcastInArea(server, p, area);
+        } else if(room > 0) {
+            this.broadcastInRoom(server, p, area, room);
+        }
+    }
+    
+    // These are the chat packages
+    // chatting is shifted by client, server sends cleartext
+    void broadcastChatOut2(ServerThread server, SocketChannel socket, Packet ps) {
+        Client cl = clients.findClient(socket);
+        int area = cl.getArea();
+        int room = cl.getRoom();
+        int slot = cl.getSlot();
+        ByteBuffer broadcast = ByteBuffer.wrap(new byte[1024]);
+        
+        // who is sending the message
+        broadcast.put(cl.getHNPair().getHNPair());
+        
+        // copy message and save to database
+        byte[] mess = ps.getChatOutData();
+        byte chattype = ps.getPayload()[4+mess.length+2-1]; //last bytes
+        broadcast.putShort((short) mess.length);
+        broadcast.put(mess);
+        //broadcast.put((byte) 0);
+        //broadcast.putInt(0x000000ff);
+        broadcast.put((byte) 0);
+        broadcast.put((byte) 0);
+        broadcast.put((byte) 0);
+        broadcast.put((byte) 0);
+        broadcast.put((byte) chattype); //chat type //for dos //1 for whole area //2 for group only
+        byte[] r = new byte[broadcast.position()];
+        broadcast.rewind();
+        broadcast.get(r);
+
+        Packet p = new Packet(Commands.CHATOUT,Commands.BROADCAST, Commands.SERVER, this.getNextPacketID(), r);
+        
+        if(chattype == 1){
+            this.broadcastInArea(server, p, area);
+        } else if(chattype == 2) {
+            this.broadcastInRoom(server, p, area, room);
+        }
+    }
+    
+    // These are the BinaryChat packages
+    // chatting is shifted by client, server sends cleartext
+    void broadcastBinaryChatOut(ServerThread server, SocketChannel socket, Packet ps) {
+        Client cl = clients.findClient(socket);
+        int area = cl.getArea();
+        int room = cl.getRoom();
+        int slot = cl.getSlot();
+        ByteBuffer broadcast = ByteBuffer.wrap(new byte[1024]);
+        broadcast.putShort((short) cl.getHNPair().getHandle().length);
+        broadcast.put(cl.getHNPair().getHandle());
+        byte[] mess = ps.getChatOutData();
+        Logging.println(new String(mess));
+        broadcast.putShort((short) mess.length);
+        broadcast.put(mess);
+        
+        byte[] r = new byte[broadcast.position()];
+        broadcast.rewind();
+        broadcast.get(r);
+        
+        Packet p = new Packet(Commands.BINARYCHAT,Commands.BROADCAST, Commands.SERVER, this.getNextPacketID(), r);
+        //To avoid shutter, should broadcast without sender
+        /*
+        if(slot > 0 && cl.gamenumber > 0) {
+            this.broadcastInSlot(server, p, area, room, slot);
+        } else if(area != 0 && area != 51 && room == 0){
+            this.broadcastInArea(server, p, area);
+        } else if(room > 0) {
+            this.broadcastInRoom(server, p, area, room);
+        }*/
+        if(area != 0 && area != 51 && room == 0){
+            this.broadcastInAreaWithoutSender(server, p, area,cl);
+        } else if(room > 0) {
+            this.broadcastInRoomWithoutSender(server, p, area, room,cl);
         }
     }
     
@@ -1241,13 +1910,33 @@ class PacketHandler implements Runnable {
 
         // set scene and type, copy payload
         scenetype[1] = (byte)(slot & 0xff); //slot
+        scenetype[2] = ps.getPayload()[0];  // type
         scenetype[3] = ps.getPayload()[1];  // type
+        scenetype[4] = ps.getPayload()[2];  // scenario
         scenetype[5] = ps.getPayload()[3];  // scenario
-        slots.getSlot(area, room, slot).setSlotType(ps.getPayload()[1]);
-        slots.getSlot(area, room, slot).setSscenario(ps.getPayload()[3]);
+        
+        //slots.getSlot(area, room, slot).setSlotType(ps.getPayload()[1]);
+        //slots.getSlot(area, room, slot).setSscenario(ps.getPayload()[3]);
+       
+        int slottyp = ((((int)ps.getPayload()[0] &0xff)<< 8)|((int)ps.getPayload()[1])&0xff);
+        int scenetyp = ((((int)ps.getPayload()[2] &0xff)<< 8)|((int)ps.getPayload()[3])&0xff);
+        slots.getSlot(area, room, slot).setSlotType((short)slottyp);
+        slots.getSlot(area, room, slot).setSscenario((short)scenetyp);
+        
         
         Packet p = new Packet(Commands.SCENESELECT, Commands.TELL, Commands.SERVER, ps.getPacketID(), scenetype);
         this.addOutPacket(server, socket, p);        
+        // set usage and playerstatus
+        if(cl.getHostFlag()==1) {
+            slots.getSlot(area, room, slot).setStatus(Slot.STATUS_GAMESET);
+            slots.getSlot(area, room, slot).setLivetime();
+        }
+        this.broadcastSlotPlayerStatus(server, area, room, slot);
+        this.broadcastPasswdProtect(server, area, room, slot);
+        this.broadcastSlotStatus(server, area, room, slot);
+        this.broadcastSlotSceneType(server, area, room, slot);
+        this.broadcastSlotAttrib2(server, area, room, slot);
+        //this.broadcastPlayerOK(server, socket);
     }
     
     void broadcastSlotTitle(ServerThread server, int area, int room, int slot) {
@@ -1366,7 +2055,8 @@ class PacketHandler implements Runnable {
 
         // just incase
         retval[0] = ps.getPayload()[0];
-        
+        //move to 0x6509
+        /*
         // set usage and playerstatus
         if(cl.getHostFlag()==1) {
             slots.getSlot(area, room, slot).setStatus(Slot.STATUS_GAMESET);
@@ -1377,12 +2067,19 @@ class PacketHandler implements Runnable {
         this.broadcastSlotStatus(server, area, room, slot);
         this.broadcastSlotSceneType(server, area, room, slot);
         this.broadcastSlotAttrib2(server, area, room, slot);
+        */
         this.broadcastPlayerOK(server, socket);
-
         Packet p = new Packet(Commands.UNKN6504, Commands.TELL, Commands.SERVER, ps.getPacketID(), retval);
         this.addOutPacket(server, socket, p);
     }
     
+    // broadcast to all players in slot that the host cancelled the game
+    void broadcastCancelSlot(ServerThread server, int area, int room, int slot,Client cl) {
+        byte[] mess = new PacketString("<LF=6><BODY><CENTER>host cancelled game<END>").getData();
+        
+        Packet p = new Packet(Commands.CANCELSLOTBC, Commands.BROADCAST, Commands.SERVER, this.getNextPacketID(), mess);
+        this.broadcastInSlotWithoutSender(server, p, area, room, slot,cl);
+    }
     // broadcast to all players in slot that the host cancelled the game
     void broadcastCancelSlot(ServerThread server, int area, int room, int slot) {
         byte[] mess = new PacketString("<LF=6><BODY><CENTER>host cancelled game<END>").getData();
@@ -1406,7 +2103,8 @@ class PacketHandler implements Runnable {
         if(ishost == 1) {
             cl.setHostFlag((byte) 0);
             slots.getSlot(area, room, slot).reset();
-            this.broadcastCancelSlot(server, area, room, slot);
+            //this.broadcastCancelSlot(server, area, room, slot);
+            this.broadcastCancelSlot(server, area, room, slot,cl);
             this.broadcastPasswdProtect(server, area, room, slot);
             this.broadcastSlotSceneType(server, area, room, slot);
             this.broadcastSlotTitle(server, area, room, slot);
@@ -1459,6 +2157,17 @@ class PacketHandler implements Runnable {
         Slot slot = slots.getSlot(area, room, slotnr);
         slot.setPassword(ps.getDecryptedString());
         Packet p = new Packet(Commands.SLOTPASSWD, Commands.TELL, Commands.SERVER, ps.getPacketID());
+        this.addOutPacket(server, socket, p);         
+    }
+    
+    void sendSlotDescription(ServerThread server, SocketChannel socket, Packet ps) {
+        Client cl = clients.findClient(socket);
+        int area = cl.getArea();
+        int room = cl.getRoom();
+        int slotnr = cl.getSlot();
+        Slot slot = slots.getSlot(area, room, slotnr);
+        slot.setDescription(ps.getDecryptedString());
+        Packet p = new Packet(Commands.SLOTDESC, Commands.TELL, Commands.SERVER, ps.getPacketID());
         this.addOutPacket(server, socket, p);         
     }
         
@@ -1532,12 +2241,14 @@ class PacketHandler implements Runnable {
         this.addOutPacket(server, socket, p);
     }
     
+    //send at quest start
     void sendDifficulty(ServerThread server, SocketChannel socket, Packet ps) {
+        //short(string length)
+        //String
         byte[] difficulty = {0x00, 0x10, 
                              0x01, 0x03, 0x00, 0x00, 0x00, 0x00, 
                              0x00, 0x00, 0x00, 0x00, 
                              0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-        
         Client cl = clients.findClient(socket);
         int area = cl.getArea();
         int room = cl.getRoom();
@@ -1572,20 +2283,22 @@ class PacketHandler implements Runnable {
         int slot = cl.getSlot();
         
         // reset this clients' area/slot
-        cl.setArea((byte) 0);
-        cl.setRoom((byte) 0);
-        cl.setSlot((byte) 0);
-        cl.setPlayerNum((byte) 0);
+        //cl.setArea((byte) 0);
+        //cl.setRoom((byte) 0);
+        //cl.setSlot((byte) 0);
+        //cl.setPlayerNum((byte) 0);
 
-        // free slot for other players when the last player left
-        if(clients.countPlayersInSlot(area, room, slot) == 0) {
-            slots.getSlot(area, room, slot).reset();
-            this.broadcastSlotPlayerStatus(server, area, room, slot);
-            this.broadcastPasswdProtect(server, area, room, slot);
-            this.broadcastSlotTitle(server, area, room, slot);
-            this.broadcastSlotSceneType(server, area, room, slot);
-            this.broadcastSlotAttrib2(server, area, room, slot);
-            this.broadcastSlotStatus(server, area, room, slot);
+        if (slot != 0) {
+            // free slot for other players when the last player left
+            if (clients.countPlayersInSlot(area, room, slot) == 0) {
+                slots.getSlot(area, room, slot).reset();
+                this.broadcastSlotPlayerStatus(server, area, room, slot);
+                this.broadcastPasswdProtect(server, area, room, slot);
+                this.broadcastSlotTitle(server, area, room, slot);
+                this.broadcastSlotSceneType(server, area, room, slot);
+                this.broadcastSlotAttrib2(server, area, room, slot);
+                this.broadcastSlotStatus(server, area, room, slot);
+            }
         }
         
         Packet p = new Packet(Commands.UNKN6002, Commands.TELL, Commands.SERVER, ps.getPacketID());
@@ -1657,7 +2370,8 @@ class PacketHandler implements Runnable {
         System.arraycopy(who, 0, wholeaves, 2, who.length);
         Packet p = new Packet(Commands.AGLLEAVE, Commands.BROADCAST, Commands.SERVER, this.getNextPacketID(), wholeaves);
         this.broadcastInAgl(server, p, game);
-
+        this.broadcastLeaveRoom(server,socket);
+        
         // set player back into area selection
         cl.setArea(0);
         cl.gamenumber = 0;
@@ -1760,7 +2474,7 @@ class PacketHandler implements Runnable {
         Packet p = new Packet(Commands.UNKN6181, Commands.TELL, Commands.SERVER, ps.getPacketID());
         this.addOutPacket(server, socket, p);        
     }
-
+       
     void sendEventDat(ServerThread server, SocketChannel socket, Packet ps) {
         Packet p;
         Client cl = clients.findClient(socket);
@@ -1786,13 +2500,15 @@ class PacketHandler implements Runnable {
         p = new Packet(Commands.EVENTDATBC, Commands.BROADCAST, Commands.SERVER, this.getNextPacketID(), broad.array());
 
         Client rcl = clients.findClientByHandle(recpt);
-        this.addOutPacket(server, rcl.getSocket(), p);
+        if(rcl != null){ //temp
+            this.addOutPacket(server, rcl.getSocket(), p);
+        }
         
         // accept event data by sending back unencrypted recipient
         p = new Packet(Commands.EVENTDAT, Commands.TELL, Commands.SERVER, ps.getPacketID(), rcpthandle);
         this.addOutPacket(server, socket, p);
     }
-    
+
     void sendBuddyList(ServerThread server, SocketChannel socket, Packet ps) {
         Packet p;
         byte[] offline = new PacketString("<BODY><SIZE=3>not connected<END>").getData();
@@ -1816,7 +2532,7 @@ class PacketHandler implements Runnable {
         }
         this.addOutPacket(server, socket, p);
     }
-    
+
     void sendCheckBuddy(ServerThread server, SocketChannel socket, Packet ps) {
         Packet p;
         byte[] offline = new PacketString("<BODY><SIZE=3><CENTER>not connected<END>").getData();
@@ -1858,6 +2574,263 @@ class PacketHandler implements Runnable {
         }
         this.addOutPacket(server, socket, p);
     }
+  
+    
+    //should test more
+    //search user with Conitionally
+    void searchUserCond(ServerThread server, SocketChannel socket, Packet ps){
+        int offset = 0;
+        int len =0;
+        byte[] pl = ps.getPayload();
+        byte[] pt = pl.clone(); 
+        byte unk0 = pl[0];
+        byte num = pl[1];
+        offset += 2;
+        byte[] temp;
+        ByteBuffer retval = ByteBuffer.wrap(new byte[1024]);
+        retval.put((byte)0);    //not unk but entry length?
+        retval.put((byte)0);   //entry length?
+        retval.put((byte)0);  //found?; will update latter
+        retval.put((byte)1); //if zero, __cnet_Send_ConditionSearchUserCertify
+        Client cl;
+        Client usercl = clients.findClient(socket);
+;
+        List <Client>clList = new LinkedList();
+        int found = 0;
+        if(num == 0){
+            clList = clients.getList();
+            if (clList != null) {
+                for (Client cls : clList) {
+                    if(cls.getArea() == usercl.getArea()){
+                        retval.put(cls.getHNPair().getHNPair());
+                        retval.putShort((short) cls.getCharacterStats().length);
+                        retval.put(cls.getCharacterStats());
+                        found++; //if found found++
+                    }
+                }
+            }
+        }
+        for (int i = 0; i < num; i++) {
+            byte case_num = pl[offset];
+            offset += 1;
+            switch (case_num) {
+                case 1: //search by hn
+                    len = decryptBuff(pt, offset, ps.getPacketID());
+                    temp = new byte[len];
+                    System.arraycopy(pt, 4 + offset, temp, 0, len);
+                    offset += len + 4;
+                    pt = pl.clone();
+                    cl = clients.findClientByHandle(temp);
+                    if (cl != null && cl.getArea() == usercl.getArea()) {
+                        retval.put(cl.getHNPair().getHNPair());
+                        retval.putShort((short) cl.getCharacterStats().length);
+                        retval.put(cl.getCharacterStats());
+                        found++; //if found found++
+                    }
+                    break;
+                case 2: //search by username?
+                    len = decryptBuff(pt, offset, ps.getPacketID());
+                    temp = new byte[len];
+                    System.arraycopy(pt, 4 + offset, temp, 0, len);
+                    offset += len + 4;
+                    pt = pl.clone();
+                    clList = clients.findClientByName(temp);
+                    if (clList != null) {
+                        for(Client cls : clList){
+                        if(cls.getArea() == usercl.getArea()){
+                            retval.put(cls.getHNPair().getHNPair());
+                            retval.putShort((short) cls.getCharacterStats().length);
+                            retval.put(cls.getCharacterStats());
+                            found++; //if found found++
+                        }
+                        }
+                    }
+                    break;
+                case 3: //search by weapon?
+                case 4:
+                case 5:
+                    byte weapon = pl[offset];
+                    offset += 1;
+                    //temp //hack
+                    byte[] arr = {4,3,2,1,0};
+                    if(weapon <= 4){
+                            weapon = arr[weapon]; //hmm, in mh1, search value are different with real value. 
+                    }
+                    clList = clients.findClientByWeapon(weapon);
+                    if (clList != null) {
+                        for(Client cls : clList){
+                            if(cls.getArea() == usercl.getArea()){
+                                retval.put(cls.getHNPair().getHNPair());
+                                retval.putShort((short) cls.getCharacterStats().length);
+                                retval.put(cls.getCharacterStats());
+                                found++; //if found found++
+                            }
+                        }
+                    }
+                    break;
+                case 6: //search by HR range? 
+                    byte hr1 = pl[offset]; //HR Start
+                    offset++;
+                    byte hr2 = pl[offset]; //HR END
+                    offset++;
+                    clList = clients.findClientByHR(hr1,hr2);
+                    if (clList != null) {
+                        for(Client cls : clList){
+                            if(cls.getArea() == usercl.getArea()){       
+                                retval.put(cls.getHNPair().getHNPair());
+                                retval.putShort((short) cls.getCharacterStats().length);
+                                retval.put(cls.getCharacterStats());
+                                found++; //if found found++
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        
+        byte[] r = new byte[retval.position()];
+        retval.rewind();
+        retval.get(r);
+        r[0] = (byte)found;
+        r[2] = (byte)found;
+        Packet p = new Packet(0x6709, Commands.TELL, Commands.SERVER, ps.getPacketID(), r);
+        this.addOutPacket(server, socket, p);
+    }
+    
+    //should test more
+    //search user with Conitionally
+    void searchUserCondLand(ServerThread server, SocketChannel socket, Packet ps){
+        int offset = 0;
+        int len =0;
+        byte[] pl = ps.getPayload();
+        byte[] pt = pl.clone(); 
+        byte[] temp;
+        ByteBuffer retval = ByteBuffer.wrap(new byte[1024]);
+        Client cl;
+        int found = 0;
+        len = decryptBuff(pt, offset, ps.getPacketID());
+        temp = new byte[len];
+        System.arraycopy(pt, 4 + offset, temp, 0, len);
+        offset += len + 4;
+        pt = pl.clone();
+        cl = clients.findClientByHandle(temp);
+        if (cl != null) {
+           // retval.put(cl.getHNPair().getHNPair());
+            //retval.putShort((short) cl.getCharacterStats().length);
+            //retval.put(cl.getCharacterStats());
+                retval.putShort((short)(cl.getHNPair().getHandle().length +1));
+                retval.put(cl.getHNPair().getHandle());
+                retval.put((byte)0);
+                
+                retval.putShort((short)0);
+                retval.putShort((short)0);
+                retval.putShort((short)0);
+                retval.put((byte)0);
+                retval.put((byte)0);
+                                
+                retval.putShort((short) cl.getCharacterStats().length);
+                retval.put(cl.getCharacterStats());
+            found++; //if found found++
+        }
+        byte[] r = new byte[retval.position()];
+        retval.rewind();
+        retval.get(r);
+        Packet p = new Packet(0x6710, Commands.TELL, Commands.SERVER, ps.getPacketID(), r);
+        this.addOutPacket(server, socket, p);
+    }
+    
+    //should test more
+    //search user with Conitionally
+    //freeze when more than one search result
+    void searchUserCondLand2(ServerThread server, SocketChannel socket, Packet ps){
+        int offset = 0;
+        int len =0;
+        byte[] pl = ps.getPayload();
+        byte[] pt = pl.clone(); 
+        byte unk0 = pl[0];
+        offset += 1;
+        byte[] temp;
+        ByteBuffer retval = ByteBuffer.wrap(new byte[1024]);
+        retval.put((byte)0);    //not unk but entry length?
+        retval.put((byte)0);   //entry length?
+        retval.put((byte)0);  //found?; will update latter
+        retval.put((byte)1); //if zero, __cnet_Send_ConditionSearchUserCertify
+        Client cl;
+        int found = 0;
+        len = decryptBuff(pt, offset, ps.getPacketID());
+        temp = new byte[len];
+        System.arraycopy(pt, 4 + offset, temp, 0, len);
+        offset += len + 4;
+        pt = pl.clone();
+        List<Client> clList = new LinkedList();
+        clList = clients.findClientByName(temp);
+        if (clList != null) {
+            for (Client cls : clList) {
+                //retval.put(cls.getHNPair().getHNPair());
+                retval.putShort((short)(cls.getHNPair().getHandle().length +1));
+                retval.put(cls.getHNPair().getHandle());
+                retval.put((byte)0);
+                retval.putShort((short)(cls.getHNPair().getNickname().length +1));
+                retval.put(cls.getHNPair().getNickname());
+                retval.put((byte)0);
+                retval.putShort((short) cls.getCharacterStats().length);
+                retval.put(cls.getCharacterStats());
+                found++; //if found found++
+            }
+        }
+        byte[] r = new byte[retval.position()];
+        retval.rewind();
+        retval.get(r);
+        r[0] = (byte)found;
+        r[2] = (byte)found;
+        Packet p = new Packet(0x6711, Commands.TELL, Commands.SERVER, ps.getPacketID(), r);
+        this.addOutPacket(server, socket, p);
+    }
+    
+    //should test more
+    //search user with Conitionally
+    void searchUserCondLand3(ServerThread server, SocketChannel socket, Packet ps){
+        int offset = 0;
+        int len =0;
+        byte[] pl = ps.getPayload();
+        byte[] pt = pl.clone(); 
+        byte[] temp;
+        ByteBuffer retval = ByteBuffer.wrap(new byte[1024]);
+        retval.put((byte)0);   //entry length?
+        retval.put((byte)0);   //entry length?
+        retval.put((byte)0);  //found?; will update latter
+        retval.put((byte)1); //if zero, __cnet_Send_ConditionSearchUserCertify
+        Client cl;
+        int found = 0;
+        len = decryptBuff(pt, offset, ps.getPacketID());
+        temp = new byte[len];
+        System.arraycopy(pt, 4 + offset, temp, 0, len);
+        offset += len + 4;
+        pt = pl.clone();
+        cl = clients.findClientByHandle(temp);
+        if (cl != null) {
+            //retval.put(cl.getHNPair().getHNPair());
+            retval.putShort((short) (cl.getHNPair().getHandle().length + 1));
+            retval.put(cl.getHNPair().getHandle());
+            retval.put((byte) 0);
+            retval.putShort((short) (cl.getHNPair().getNickname().length + 1));
+            retval.put(cl.getHNPair().getNickname());
+            retval.put((byte) 0);
+            retval.putShort((short) cl.getCharacterStats().length);
+            retval.put(cl.getCharacterStats());
+            found++; //if found found++
+        }
+        byte[] r = new byte[retval.position()];
+        retval.rewind();
+        retval.get(r);
+        r[0] = (byte)found;
+        r[2] = (byte)found;
+        Packet p = new Packet(0x670a, Commands.TELL, Commands.SERVER, ps.getPacketID(), r);
+        this.addOutPacket(server, socket, p);
+    }
+    
     
     void sendPrivateMsg(ServerThread server, SocketChannel socket, Packet ps) {
         byte[] offline = new PacketString("<BODY><SIZE=3>not connected<END>").getData();
@@ -1885,6 +2858,31 @@ class PacketHandler implements Runnable {
         }
     }
     
+    void sendChatOut(ServerThread server, SocketChannel socket, Packet ps) {
+        byte[] offline = new PacketString("not connected").getData();
+        Packet p;
+        Client cl = clients.findClient(socket);
+
+        // get recipient and message
+        PrivateMessage mess = ps.getDecryptedPvtMess(cl);
+        cl = clients.findClientByHandle(mess.getRecipient());
+        if(cl != null) {
+            byte[] broadcast = mess.getPacketData();
+
+            // accept the message packet
+            p = new Packet(Commands.CHATIN_TU, Commands.TELL, Commands.SERVER, ps.getPacketID());
+            this.addOutPacket(server, socket, p);
+            
+            // broadcast message to recipient
+            p = new Packet(Commands.CHATIN_TU_BC, Commands.BROADCAST, Commands.SERVER, this.getNextPacketID(), broadcast);
+            this.addOutPacket(server, cl.getSocket(), p);
+        } else {
+            // tell sender that recipient is offline
+            p = new Packet(Commands.CHATIN_TU, Commands.TELL, Commands.SERVER, ps.getPacketID(), offline);
+            p.setErr();
+            this.addOutPacket(server, socket, p);
+        }
+    }    
     void sendLogout(ServerThread server, SocketChannel socket, Packet ps) {
         Client cl = clients.findClient(socket);
         int area = cl.getArea();
@@ -2000,8 +2998,9 @@ class PacketHandler implements Runnable {
                 // set the player to offline status
                 db.updateClientOrigin(cl.getUserID(), STATUS_OFFLINE, -1, 0, 0);
                 
+                //this.broadcastLeaveRoom(server,socket);
                 // first of all remove this client from list
-                clients.remove(cl);
+                //clients.remove(cl);
 
                 // it's a host, so we are in normal lobbies
                 if(host==1 && slot!=0) {
@@ -2073,10 +3072,11 @@ class PacketHandler implements Runnable {
 
                 // set the player to offline status
                 db.updateClientOrigin(cl.getUserID(), STATUS_OFFLINE, -1, 0, 0);
-                
+
+                this.broadcastLeaveRoom(server,socket);
                 // first of all remove this client from list
                 clients.remove(cl);
-
+                
                 // it's a host, so we are in normal lobbies
                 if(host==1 && slot!=0) {
                     slots.getSlot(area, room, slot).reset();
@@ -2139,7 +3139,7 @@ class PacketHandler implements Runnable {
     synchronized void cleanGhostRooms(ServerThread server) {
         for(int area=1; area<=areas.getAreaCount(); area ++) {
             for(int room=1;room<=rooms.getRoomCount(); room++) {
-                for(int slot=1; slot<=20; slot++) {
+                for(int slot=1; slot<=slots.getSlotCount(); slot++) {
                     if(slots.getSlot(area, room, slot).getStatus() == Slot.STATUS_GAMESET && clients.countPlayersInSlot(area, room, slot) == 0) {
                         slots.getSlot(area, room, slot).setStatus(Slot.STATUS_FREE);
                         this.broadcastSlotStatus(server, area, room, slot); 
@@ -2150,7 +3150,16 @@ class PacketHandler implements Runnable {
         }
     }
      
-    
+  public static String stringToHex0x(String s) {
+    String result = "";
+
+    for (int i = 0; i < s.length(); i++) {
+      result += String.format("0x%02X ", (int) s.charAt(i));
+    }
+
+    return result;
+  }
+  
 // this is the protocol function that glues together all the the packet functions
     void handleInPacket(ServerThread server, SocketChannel socket, Packet packet) {
         switch(packet.getwho()) {
@@ -2158,15 +3167,59 @@ class PacketHandler implements Runnable {
                 switch(packet.getqsw()) {
                     case Commands.QUERY:
                         // client questions
+                        Logging.println("QUERY Commands: 0x" + Integer.toHexString(packet.getCmd()));
+                        Logging.printBuffer(packet.getPacketData());
                         switch(packet.getCmd()) {
                             case Commands.UNKN61A0:         send61A0(server, socket, packet);           break;
                             case Commands.CHECKRND:         sendCheckRnd(server, socket, packet);       break;
                             case Commands.UNKN61A1:         send61A1(server, socket, packet);           break;
+                            case Commands.UNKN6148:         send6148(server, socket, packet);     break;
+                            case Commands.UNKN6149:         send6149(server, socket, packet);     break;
                             case Commands.HNSELECT:         sendHNselect(server, socket, packet);       break;
                             case Commands.MOTHEDAY:         sendMotheday(server, socket, packet);       break;
                             case Commands.CHARSELECT:       sendCharSelect(server, socket, packet);     break;
                             case Commands.UNKN6881:         send6881(server, socket, packet);           break;
                             case Commands.UNKN6882:         send6882(server, socket, packet);           break;
+                            
+                            //Might Area realted
+                            case Commands.UNKN6883:         send6883(server, socket, packet);           break;                     
+                            case Commands.UNKN68a0:         send68a0(server, socket, packet);           break;
+                            case Commands.UNKN68a1:         send68a1(server, socket, packet);           break;
+                            case Commands.UNKN6891:         send6891(server, socket, packet);           break; 
+                            case Commands.UNKN630d:         send630d(server, socket, packet);           break;
+                                
+                            case Commands.UNKN6415:         send6415(server, socket, packet);           break;                              
+                            case Commands.UNKN6306:         send6306(server, socket, packet);           break;//leave Plaza?
+                            case Commands.UNKN630a:         send630a(server, socket, packet);           break;//Room Member List?
+                            case Commands.UNKN670f:         send670f(server, socket, packet);           break;//it might land select?
+                            case Commands.UNKN640d:         send640d(server, socket, packet);           break;//need for quest?
+                            case Commands.UNKN6890:         send6890(server, socket, packet);           break;//for market should send int time;
+                            case Commands.UNKN6144:         send6144(server, socket, packet);           break;
+                            case Commands.UNKN614d:         send614d(server, socket, packet);           break;
+                            case Commands.UNKN660f:         send660f(server, socket, packet);           break;// permit to view and change quest desc?
+                            
+                            //dos stubs
+                            case Commands.UNKN68c0:         send68c0(server, socket, packet);           break;
+                            case Commands.UNKN6892:         send6892(server, socket, packet);           break;
+                            case Commands.UNKN6884:         send6884(server, socket, packet);           break;
+                            case Commands.UNKN620b:         send620b(server, socket, packet);           break;
+                            case Commands.UNKN631b:         send631b(server, socket, packet);           break;
+                            
+                           //unk..
+                            case Commands.UNKN6312:         send6312(server, socket, packet);           break;
+                            case Commands.UNKN6313:         send6313(server, socket, packet);           break;
+                            case Commands.UNKN6314:         send6314(server, socket, packet);           break;
+                            
+                            //dos quests
+                            case Commands.UNKN650c:         send650c(server, socket, packet);           break;
+                            case Commands.UNKN650b:         send650b(server, socket, packet);           break;
+                            
+                            //dos quest return?
+                            case Commands.UNKN6139:         send6139(server, socket, packet);           break;                            
+                            
+                             //dos unk func
+                            //case Commands.UNKN6310:         send6310(server, socket, packet);           break;//temp //not work 
+                            //
                             case Commands.RANKINGS:         sendRankings(server, socket, packet);       break;
                             case Commands.AREACOUNT:        sendAreaCount(server, socket, packet);      break;
                             case Commands.AREAPLAYERCNT:    sendAreaPlayercnt(server, socket, packet);  break;
@@ -2178,7 +3231,7 @@ class PacketHandler implements Runnable {
                             case Commands.ROOMPLAYERCNT:    sendRoomPlayerCnt(server, socket, packet);  break;
                             case Commands.ROOMSTATUS:       sendRoomStatus(server, socket, packet);     break;
                             case Commands.ROOMNAME:         sendRoomName(server, socket, packet);       break;
-                            case Commands.UNKN6308:         send6308(server, socket, packet);           break;
+                            case Commands.UNKN6308:         send6308(server, socket, packet);           break; //room desc?
                             case Commands.ENTERROOM:        sendEnterRoom(server, socket, packet);      break;
                             case Commands.SLOTCOUNT:        sendSlotCount(server, socket, packet);      break;
                             case Commands.SLOTSTATUS:       sendSlotStatus(server, socket, packet);     break;
@@ -2197,8 +3250,8 @@ class PacketHandler implements Runnable {
                             case Commands.ATTRDESCRIPT:     sendAttrDescript(server, socket, packet);   break;
                             case Commands.ATTRATTRIB:       sendAttrAttrib(server, socket, packet);     break;
                             case Commands.PLAYERSTATS:      sendPlayerStats(server, socket, packet);    break;
-                            case Commands.EXITSLOTLIST:     sendExitSlotlist(server, socket, packet);   break;
-                            case Commands.EXITAREA:         sendExitArea(server, socket, packet);       break;
+                            case Commands.EXITSLOTLIST:     sendExitSlotlist(server, socket, packet);   break; //room exit 
+                            case Commands.EXITAREA:         sendExitArea(server, socket, packet);       break; //area select
                             case Commands.CREATESLOT:       sendCreateSlot(server, socket, packet);     break;
                             case Commands.SCENESELECT:      sendSceneSelect(server, socket, packet);    break;
                             case Commands.SLOTNAME:         sendSlotName(server, socket, packet);       break;
@@ -2209,6 +3262,7 @@ class PacketHandler implements Runnable {
                             case 0x6504:                    send6504(server, socket, packet);           break;
                             case Commands.CANCELSLOT:       sendCancelSlot(server, socket, packet);     break;
                             case Commands.SLOTPASSWD:       sendSlotPasswd(server, socket, packet);     break;
+                            case Commands.SLOTDESC:         sendSlotDescription(server, socket, packet);break;
                             case Commands.PLAYERCOUNT:      sendPlayerCount(server, socket, packet);    break;
                             case Commands.PLAYERNUMBER:     sendPlayerNumber(server, socket, packet);   break;
                             case Commands.PLAYERSTAT:       sendPlayerStat(server, socket, packet);     break;
@@ -2224,20 +3278,30 @@ class PacketHandler implements Runnable {
                             case Commands.JOINGAME:         sendJoinGame(server, socket, packet);       break;
                             case Commands.GETINFO:          sendGetInfo(server, socket, packet);        break;
                             case Commands.EVENTDAT:         sendEventDat(server, socket, packet);       break;
+                           
+                            //search stuff (quest will be later) //buggy except 6709?
                             case Commands.BUDDYLIST:        sendBuddyList(server, socket, packet);      break;
                             case Commands.CHECKBUDDY:       sendCheckBuddy(server, socket, packet);     break;
+                            case 0x6709:                    searchUserCond(server, socket, packet);     break;
+                            case 0x6710:                    searchUserCondLand(server, socket, packet);     break;
+                            case 0x6711:                    searchUserCondLand2(server, socket, packet);     break;
+                            case 0x670a:                    searchUserCondLand3(server, socket, packet);     break;
+                            
                             case Commands.PRIVATEMSG:       sendPrivateMsg(server, socket, packet);     break;
+                            case Commands.CHATIN_TU:        sendChatOut(server, socket, packet);           break;//temp
                             case Commands.UNKN6181:         send6181(server, socket, packet);           break;
                             case Commands.LOGOUT:           sendLogout(server, socket, packet);         break;
                                 
                              default:
-                                Logging.println("Unknown command on query");
-                                Logging.printBuffer(packet.getPacketData());
+                                Logging.println("Unknown QUERY command on query: 0x" + Integer.toHexString(packet.getCmd()));
+                                //Logging.printBuffer(packet.getPacketData());
                         }
                         break;
                         
                     case Commands.TELL:
                         // client answers
+                        Logging.println("TELL Commands: 0x" + Integer.toHexString(packet.getCmd()));
+                        Logging.printBuffer(packet.getPacketData());
                         switch(packet.getCmd()) {
                             case Commands.CONNCHECK:
                                 // this client is still alive
@@ -2264,8 +3328,7 @@ class PacketHandler implements Runnable {
                                     // next step is to offer the registered Handle/Name pairs
                                     sendIDhnpairs(server, socket);
                                 }
-                                break;
-                                    
+                                break;                                    
                             case Commands.PATCHLINECHECK:
                                 continuePatch(server, socket, packet);
                                 break;
@@ -2279,13 +3342,16 @@ class PacketHandler implements Runnable {
                                 
                             default:
                                 // for debugging purposes
-                                Logging.println("Unknown command on answer");
-                                Logging.printBuffer(packet.getPacketData());
+                                //Logging.println("Unknown command on answer");
+                                //Logging.printBuffer(packet.getPacketData());
+                                Logging.println("Unknown TELL command on query: 0x" + Integer.toHexString(packet.getCmd()));
                         }
                         break;
 
                     // broadcast commands from client
                     case Commands.BROADCAST:
+                        Logging.println("BROADCAST Commands: 0x" + Integer.toHexString(packet.getCmd()));
+                        Logging.printBuffer(packet.getPacketData());
                         switch(packet.getCmd()) {
                             case Commands.STARTGAME:
                                 broadcastGetReady(server, socket);
@@ -2294,14 +3360,24 @@ class PacketHandler implements Runnable {
                             case Commands.CHATIN:
                                 broadcastChatOut(server, socket, packet);
                                 break;
+                            case Commands.CHATIN2:
+                                //not work!!!!
+                                broadcastChatOut2(server, socket, packet);
+                                break;
+                            case Commands.BINARYCHAT: //_cnet_RecvFromLbs_NoticeChatBinary
+                                broadcastBinaryChatOut(server, socket, packet);
+                                break;
+                            default:
+                                Logging.println("Unknown BROADCAST command on query: 0x" + Integer.toHexString(packet.getCmd()));
                         }
 
                         break;
                         
                     default:
                         // for debugging purposes
-                        Logging.println("Unknown qsw type on incoming packet!");
-                        Logging.printBuffer(packet.getPacketData());
+                        //Logging.println("Unknown qsw type on incoming packet!");
+                        //Logging.printBuffer(packet.getPacketData());
+                        Logging.println("Unknown command on query: 0x" + Integer.toHexString(packet.getCmd()));
                 }
                 break;
                 

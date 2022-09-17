@@ -24,25 +24,46 @@ package bioserver;
  * Object for rooms within areas
  */
 public class Room {
-    public static final byte STATUS_ACTIVE = 3;
-    public static final byte STATUS_INACTIVE = 0;
+    public final static byte STATUS_INACTIVE = 0;
+    public final static byte STATUS_FREE = 1;
+    public final static byte STATUS_INCREATE = 2;    // TODO: find this out
+    public final static byte STATUS_ACTIVE = 3;    // while creating ruleset
+    public final static byte STATUS_BUSY = 4;       // FULL
     
     private int areanumber;
     private String name;
+    private String description;
     private byte status;
     
     public Room(int area, String name, byte status) {
         this.name = name;
         this.status = status;
         this.areanumber = area;
+        this.description = "Let's play";
     }
     
     public String getName() {
         return this.name;
     }
     
+    public void setName(String name) {
+       this.name = name;
+    }
+    
+    public String getDescription() {
+        return this.description;
+    }
+    
+    public void setDescription(String description) {
+        this.description = description;
+    }
+    
     public byte getStatus() {
         return this.status;
+    }
+    
+    public byte setStatus(byte nr) {
+        return this.status = nr;
     }
     
     public int getAreaNumber() {

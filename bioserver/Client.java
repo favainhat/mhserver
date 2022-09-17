@@ -60,6 +60,10 @@ public class Client {
         return socket;
     }
     
+    public void setSocket(SocketChannel socket) {
+        this.socket = socket;
+    }
+    
     public String getUserID() {
         return userid;
     }
@@ -74,10 +78,12 @@ public class Client {
     
     public void setCharacterStats(byte[] charstats) {
         this.characterstats = charstats;
-        this.character = (short) (charstats[0xc8] & 0x00ff);
+        //this.character = (short) (charstats[0xc8] & 0x00ff);
         // npc start with MAC = 9
-        this.character = (short) (this.character + (short) (8 * charstats[0xca] & 0x00ff));
-        this.costume = (short) (charstats[0xcc] & 0x00ff);
+       // this.character = (short) (this.character + (short) (8 * charstats[0xca] & 0x00ff));
+        //this.costume = (short) (charstats[0xcc] & 0x00ff);
+        this.character = (short) 0; //temp
+        this.costume = (short) 0; //temp
     }
     
     public void setArea(int number) {
@@ -124,6 +130,7 @@ public class Client {
         return this.player;
     }
     
+    
     public byte[] getPreGameStat(byte playernum) {
         ByteBuffer z = ByteBuffer.wrap(new byte[300]);
         
@@ -141,6 +148,7 @@ public class Client {
         z.get(retval);
         return retval;
     }
+    
     
    public byte[] getCharacterStat() {
         ByteBuffer z = ByteBuffer.wrap(new byte[300]);
@@ -161,5 +169,9 @@ public class Client {
 
    public short getCostume() {
        return this.costume;
+   }
+   
+   public String getsession() {
+       return this.session;
    }
 }

@@ -62,7 +62,7 @@ public class HeartBeatThread implements Runnable {
                 gspackethandler.connCheck(gsserver);
                 
                 // also check if any slots have to be autostarted
-                packethandler.checkAutoStart(server);
+                //packethandler.checkAutoStart(server);
 
                 // server asks for client every 60 secs
                 // client will be deleted from list and disconnected if not answered

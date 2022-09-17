@@ -141,6 +141,7 @@ public class Packet {
         for(int i=0; i<length; i++) pay[4+i] = (byte) (pay[4+i] ^ calc_shift((byte)i, (byte)(pid & (byte)0xff)));
     }
     
+    
     // return a byte array with decrypted string
     public byte[] getDecryptedString() {
         int length = (((int)pay[0] << 8)|((int)pay[1])) -2; // skip the sum
@@ -176,11 +177,36 @@ public class Packet {
         return(new HNPair(handle, nickname));
     }
     
+    /*
     public byte[] getCharacterStats(){
         for(int i=0; i<0xD0; i++) pay[4+i] = (byte) (pay[4+i] ^ calc_shift((byte)i, (byte)(pid & (byte)0xff)));
         byte[] retval = new byte[0xD0];
         System.arraycopy(pay, 4, retval, 0, 0xD0);
         return retval;
+    }
+    */
+    
+    
+    public byte[] getCharacterStats(){
+        int hlen = (((int)pay[0] << 8)|((int)pay[1])) -2; // skip the sum
+        for(int i=0; i<hlen; i++) pay[4+i] = (byte) (pay[4+i] ^ calc_shift((byte)i, (byte)(pid & (byte)0xff)));
+        byte[] handle = new byte[hlen];
+        System.arraycopy(pay, 4, handle, 0, hlen);
+        //System.out.println(new String(handle));
+        return handle;      
+        /*
+        int hlen = (((int)pay[0] << 8)|((int)pay[1])) -2; // skip the sum
+        int nlen = (((int)pay[hlen +4] << 8)|((int)pay[hlen +5])) -2; // skip the sum
+
+        for(int i=0; i<hlen; i++) pay[4+i] = (byte) (pay[4+i] ^ calc_shift((byte)i, (byte)(pid & (byte)0xff)));
+        for(int i=0; i<nlen; i++) pay[hlen+8+i] = (byte) (pay[hlen+8+i] ^ calc_shift((byte)i, (byte)(pid & (byte)0xff)));
+
+        byte[] handle = new byte[hlen];
+        byte[] nickname = new byte[nlen];
+        System.arraycopy(pay, 4, handle, 0, hlen);
+        System.arraycopy(pay, hlen+8, nickname, 0, nlen);
+        return handle;
+        */
     }
     
     // this returns the first two bytes of the payload as int

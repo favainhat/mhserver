@@ -32,8 +32,11 @@ public class Areas {
     // setup our areas
     public Areas() {
         areas = new LinkedList();
-        areas.add(new Area(1, "East Town", "<BODY><SIZE=3>standard rules<END>", Area.STATUS_ACTIVE));
-        areas.add(new Area(2, "West Town", "<BODY><SIZE=3>individual games<END>",Area.STATUS_ACTIVE));
+        areas.add(new Area(1, "East Town", "1", Area.STATUS_ACTIVE));
+        areas.add(new Area(2, "West Town", "2",Area.STATUS_ACTIVE));
+        areas.add(new Area(3, "Town3", "3",Area.STATUS_ACTIVE));
+        areas.add(new Area(4, "Town4", "4",Area.STATUS_ACTIVE));
+        areas.add(new Area(5, "Town5", "5",Area.STATUS_ACTIVE));
     }
     
     // how many areas do we have ?

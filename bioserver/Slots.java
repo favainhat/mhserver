@@ -27,7 +27,7 @@ public class Slots {
     private List slots;
     private int numberOfAreas;
     private int numberOfRooms;
-    private final int numberOfSlots = 20;
+    private final int numberOfSlots = 5; //For G, it's ok 8, For 2 should 5 or under
     
     // create a list of empty slots
     public Slots(int numberOfAreas, int numberOfRooms) {
@@ -37,7 +37,7 @@ public class Slots {
 
         for(int area=1; area<=numberOfAreas; area ++) {
             for(int room=1; room<=numberOfRooms; room++) {
-                for(int slot=0; slot<20; slot++) {
+                for(int slot=0; slot<numberOfSlots; slot++) {
                     slots.add(new Slot(area, room, slot));
                 }
             }
@@ -66,7 +66,11 @@ public class Slots {
         return slot.getName();
     }
     
-    public byte getScenario(int area, int room, int slotnr) {
+    public byte[] getDescription(int area, int room, int slotnr) {
+        Slot slot = (Slot) slots.get(calcSlotnr(area, room, slotnr));
+        return slot.getDescription();
+    }
+    public short getScenario(int area, int room, int slotnr) {
         Slot slot = (Slot) slots.get(calcSlotnr(area, room, slotnr));
         return slot.getSscenario();
     }
@@ -76,7 +80,7 @@ public class Slots {
         return slot.getProtection();
     }
 
-    public byte getSlotType(int area, int room, int slotnr) {
+    public short getSlotType(int area, int room, int slotnr) {
         Slot slot = (Slot) slots.get(calcSlotnr(area, room, slotnr));
         return slot.getSlotType();
     }

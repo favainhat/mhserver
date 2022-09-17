@@ -37,6 +37,8 @@ public class Commands {
     final static int CHECKVERSION    = 0x6103;  // check the clients version
     final static int CHECKRND        = 0x600E;  // check random numbers
     final static int UNKN61A1        = 0x61A1;
+    final static int UNKN6148        = 0x6148;
+    final static int UNKN6149        = 0x6149;
     final static int IDHNPAIRS       = 0x6131;  // send available ID/HN pairs
 
     final static int HNSELECT        = 0x6132;  // which pair shall be used
@@ -46,6 +48,36 @@ public class Commands {
     final static int CHARSELECT      = 0x6190;  // selected char and its statistics
     final static int UNKN6881        = 0x6881;
     final static int UNKN6882        = 0x6882;
+    final static int UNKN6883        = 0x6883;
+    final static int UNKN68a0        = 0x68a0;
+    final static int UNKN68a1        = 0x68a1;
+    final static int UNKN6891        = 0x6891;
+    final static int UNKN630a        = 0x630a;
+    final static int UNKN6306        = 0x6306;
+    final static int UNKN670f        = 0x670f;
+    final static int UNKN640d        = 0x640d;
+    final static int UNKN6890        = 0x6890;
+    final static int UNKN614d        = 0x614d;
+    final static int UNKN68c0       = 0x68c0;
+    final static int UNKN6892       = 0x6892;
+    final static int UNKN6884       = 0x6884;
+    final static int UNKN620b       = 0x620b;
+    final static int UNKN6144        = 0x6144;
+    final static int UNKN660f        = 0x660F;
+    final static int UNKN630d        = 0x630d;
+    final static int UNKN6415        = 0x6415;
+    final static int UNKN631b        = 0x631b;
+    final static int UNKN6312        = 0x6312;
+    final static int UNKN6313        = 0x6313;
+    final static int UNKN6314        = 0x6314;
+    final static int UNKN650b        = 0x650b;
+    final static int UNKN650c        = 0x650c;
+    final static int UNKN6139        = 0x6139;
+    final static int UNKN6192        = 0x6192;
+    final static int UNKN6310        = 0x6310;
+
+
+    
     final static int RANKINGS        = 0x6145;  // playerranking one can see in the area lobby
     final static int UNKN6141        = 0x6141;
     final static int AREACOUNT       = 0x6203;  // how many areas has this server
@@ -100,8 +132,12 @@ public class Commands {
     final static int STARTGAME       = 0x6508;  // broadcast by host when game will be started
 
     final static int CHATIN          = 0x6701;  // chat message from a client
+    final static int CHATIN_TU       = 0x670B;  // chat message from a client to selected one
+    final static int CHATIN_TU_BC     = 0x670C;  // chat message from a client to selected one
     final static int CHATOUT         = 0x6702;  // chat mesage from server
-
+    final static int BINARYCHAT      = 0x6708;  // chat mesage from server
+    final static int CHATIN2          = 0x6714;  // chat message from a client
+    
     final static int GETREADY        = 0x6910;  // broadcasted by server, clients request game details then
     final static int PLAYERCOUNT     = 0x6911;  // total number of players for the gamesession
     final static int PLAYERNUMBER    = 0x6912;  // number of player
@@ -110,7 +146,7 @@ public class Commands {
     final static int GAMESESSION     = 0x6915;  // the session number for this game
     final static int GAMEDIFF        = 0x6914;  // difficulty of the game
     final static int GSINFO          = 0x6916;  // gameserver info (192.168.2.1:8590)
-    final static int UNKN6002        = 0x6002;
+    final static int UNKN6002        = 0x6002;  // logout
 
     final static int ENTERAGL        = 0x6210;  // entering the aftergame
     final static int AGLSTATS        = 0x6213;  // stats after the game
@@ -136,6 +172,7 @@ public class Commands {
     
     final static int LOGOUT          = 0x6006;
     final static int SLOTPASSWD      = 0x660A;  // set passowrd for slot
+    final static int SLOTDESC      = 0x6610;  // set description for slot
 
     final static int POSTGAMEINFO    = 0x6138;  // statistics for the played game, used for rankings
 
