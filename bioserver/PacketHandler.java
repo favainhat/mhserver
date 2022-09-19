@@ -825,27 +825,51 @@ class PacketHandler implements Runnable {
         }
         
         //more analysing need
-        //wrong!!!
+        //monster price list?
         void send6884(ServerThread server, SocketChannel socket, Packet ps) {
 
         byte nr = ps.getPayload()[0];
-        byte[] str ="".getBytes();
-        //byte[] str ="".getBytes();
-        ByteBuffer broadcast = ByteBuffer.wrap(new byte[1024]);
-        //broadcast.put(nr);
-        //broadcast.putShort((short) str.length);
-        //broadcast.put(str);
         
-        //broadcast.put(nr);
-        for(int i= 0; i< 0x10 ;i++){
-        broadcast.put((byte)i);
-        broadcast.putShort((short) str.length);
-        broadcast.put(str);
+        ByteBuffer retval = ByteBuffer.wrap(new byte[0x300]);
+        retval.put(nr);
+        retval.putShort((short)0x300);
+        //temp value
+        //Should be changed to be handled by sql.
+        short monster_price[] = {0,1500,8000,0,0,0,1500,10000,1500,0,0,1500,0,0,1500,1500,1500,1500,0,0,1500,1500,1500,0,0,0,1500,1500,1500,0,0,1500,0,8000,0,0,10000,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,0,0,1500,8000,8000,0,0,0,1500,1500,0,1500,0,0,0,8000,1500,0};
+        
+        if(nr ==0){
+            //wanted
+            //need more investigate
+
+        }else if(nr == 1){
+            //monster price
+            //temporary value
+            for(int i= 0;i<monster_price.length;i++){
+                retval.put((byte)((monster_price[i])&0xff));
+                retval.put((byte)((monster_price[i]>>8)&0xff));
+            }
+        }else if(nr == 2){
+            //monster price changes
+            //temporary value
+            for(int i= 0;i<monster_price.length;i++){
+                byte changes = (byte)0xff;
+                retval.put(changes);                
+            }
+        }else if(nr ==3){
+            //percentage of observatory
+            //temporary value
+            //Even if it exceeds 100%, the Elder Dragon Interception doesn't seem to work.
+            //But, Incorrect values cause a crash. and obviously relevant.
+            byte[] arr = new byte[0x28];
+            retval.put(arr);
+            retval.put((byte)20);
+            retval.put((byte)20);
         }
-        
-        byte[] r = new byte[broadcast.position()];
-        broadcast.rewind();
-        broadcast.get(r);
+        byte[] r = new byte[retval.position()];
+        retval.rewind();
+        retval.get(r);
+        r[1] = (byte)((r.length>>8)&0xff);
+        r[2] = (byte)((r.length)&0xff);
         Packet p = new Packet(Commands.UNKN6884, Commands.TELL, Commands.SERVER, ps.getPacketID(), r);
         this.addOutPacket(server, socket, p);
         }
@@ -972,7 +996,6 @@ class PacketHandler implements Runnable {
         Client cl = clients.findClient(socket);
         int area = cl.getArea();
         int nr = ps.getNumber();
-        //rooms.setStatus(area,nr,Room.STATUS_INCREATE);
         Packet p = new Packet(Commands.UNKN6310, Commands.TELL, Commands.SERVER, ps.getPacketID());
         this.addOutPacket(server, socket, p);
     }
@@ -1074,14 +1097,13 @@ class PacketHandler implements Runnable {
         this.addOutPacket(server, socket, p);
     }
     
-   //area player count? seems not //unk
+    //unk
     void send630d(ServerThread server, SocketChannel socket, Packet ps) {
        int nr = ps.getNumber();
        ByteBuffer retval = ByteBuffer.wrap(new byte[1024]);
-       //int[] cnt = clients.countPlayersInArea(nr); 
        retval.putShort((short)nr);
   
-        retval.putInt(0); //area only player?    
+        retval.putInt(0);
         
         byte[] r = new byte[retval.position()];
         retval.rewind();
@@ -1744,7 +1766,7 @@ class PacketHandler implements Runnable {
         cl.setArea(area);
         cl.setRoom(room);
         cl.setRoom(slot);
-        db.updateClientOrigin(cl.getUserID(), STATUS_LOBBY, 0, 0, 0);
+        db.updateClientOrigin(cl.getUserID(), STATUS_LOBBY, area, room, slot);
         
         Packet p = new Packet(Commands.EXITAREA, Commands.TELL, Commands.SERVER, ps.getPacketID());
         this.addOutPacket(server, socket, p);

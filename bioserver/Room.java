@@ -26,9 +26,7 @@ package bioserver;
 public class Room {
     public final static byte STATUS_INACTIVE = 0;
     public final static byte STATUS_FREE = 1;
-    public final static byte STATUS_INCREATE = 2;    // TODO: find this out
-    public final static byte STATUS_ACTIVE = 3;    // while creating ruleset
-    public final static byte STATUS_BUSY = 4;       // FULL
+    public final static byte STATUS_ACTIVE = 3;
     
     private int areanumber;
     private String name;
