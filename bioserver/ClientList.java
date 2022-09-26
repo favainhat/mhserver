@@ -215,7 +215,7 @@ public class ClientList {
     }
     
     public byte[] getPlayerStats(int area, int room, int slotnr) {
-        ByteBuffer retval = ByteBuffer.wrap(new byte[1024]);
+        ByteBuffer retval = ByteBuffer.wrap(new byte[8192]);
         
         byte playercnt = (byte) (this.countPlayersInSlot(area, room, slotnr) & 0xff);
         retval.putShort((short) slotnr);
@@ -239,7 +239,7 @@ public class ClientList {
     }
     
     public byte[] getPlayerStats2(int area, int room) {
-        ByteBuffer retval = ByteBuffer.wrap(new byte[1024]);
+        ByteBuffer retval = ByteBuffer.wrap(new byte[8192]);
         
         byte playercnt = (byte) (this.countPlayersInRoom(area, room) & 0xff);
         retval.putShort((short) room);

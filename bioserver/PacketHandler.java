@@ -835,7 +835,7 @@ class PacketHandler implements Runnable {
         retval.putShort((short)0x300);
         //temp value
         //Should be changed to be handled by sql.
-        short monster_price[] = {0,1500,8000,0,0,0,1500,10000,1500,0,0,1500,0,0,1500,1500,1500,1500,0,0,1500,1500,1500,0,0,0,1500,1500,1500,0,0,1500,0,8000,0,0,10000,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,0,0,1500,8000,8000,0,0,0,1500,1500,0,1500,0,0,0,8000,1500,0};
+        short monster_price[] = {1500,8000,0,0,0,1500,10000,1500,0,0,1500,0,0,1500,1500,0,1500,0,0,1500,1500,1500,0,0,0,1500,1500,1500,0,0,1500,0,8000,0,0,10000,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,0,0,1500,8000,8000,0,0,0,1500,1500,0,1500,0,0,0,8000,1500,0};
         
         if(nr ==0){
             //wanted
@@ -860,7 +860,7 @@ class PacketHandler implements Runnable {
             //temporary value
             //Even if it exceeds 100%, the Elder Dragon Interception doesn't seem to work.
             //But, Incorrect values cause a crash. and obviously relevant.
-            byte[] arr = new byte[0x28];
+            byte[] arr = new byte[0x29];
             retval.put(arr);
             retval.put((byte)20);
             retval.put((byte)20);
@@ -978,11 +978,12 @@ class PacketHandler implements Runnable {
 
     
 
-     //sends
-     //SetSendData16
-    //SetSendStringData (unencrypted string? - without length?)
+    //sends
+    //SetSendData16
+    //SetSendStringData
     //recv 
     //none
+    //it might contain monster killing record for updating monster price
     void send6139(ServerThread server, SocketChannel socket, Packet ps) {
         //SetSendData16
         int nr = ps.getNumber(); //quest num
@@ -1513,7 +1514,6 @@ class PacketHandler implements Runnable {
     }
     
     void broadcastSlotAttrib2(ServerThread server, int area, int room, int slot) {
-        ///*
         byte[] retval = {0,1,   // slotnr 
                          0,4,   // max players for slot
                          0,4, 
@@ -1531,7 +1531,6 @@ class PacketHandler implements Runnable {
     }
 
     void sendSlotAttrib2(ServerThread server, SocketChannel socket, Packet ps) {
-        ///*
         byte[] retval = {0,1,   // slotnr 
                          0,4,   // max players for slot
                          0,4, 
