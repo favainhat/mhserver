@@ -682,10 +682,16 @@ class PacketHandler implements Runnable {
     // Currently this is file1 only    
     void send6881(ServerThread server, SocketChannel socket, Packet ps) {
         //byte[] datacount = {0x01, 0,0,0x12,0x5D};
-        byte[] datacount = {0x01, 0,0,0,0};
-        int len = Packet6882.getlen();
-        datacount[3] = (byte) ((len >> 8)&0xff);
-        datacount[4] = (byte) (len &0xff);
+        ByteBuffer retval = ByteBuffer.wrap(new byte[100]);
+        byte count = 4;
+        retval.put(count); //bin count //0:area info 1~3:event?
+        for(int i = 0;i<count;i++){
+            int len = Packet6882.getlen(i);
+            retval.putInt(len);
+        }
+        byte[] datacount = new byte[retval.position()];
+        retval.rewind();
+        retval.get(datacount); 
         Packet p = new Packet(Commands.UNKN6881, Commands.TELL, Commands.SERVER, ps.getPacketID(), datacount);
         this.addOutPacket(server, socket, p);
     }
@@ -710,11 +716,14 @@ class PacketHandler implements Runnable {
     
     //might size like 6881
     void send6883(ServerThread server, SocketChannel socket, Packet ps) {
-        //byte[] datacount = {0x01, 0,0,0x12,0x5D,0,0,0,0};        
-        byte[] datacount = {0,0,0,0,0,0,0,0,0,0};
-        int len = Packet6882.getlen();
-        datacount[3] = (byte) ((len >> 8)&0xff);
-        datacount[4] = (byte) (len &0xff);
+        ByteBuffer retval = ByteBuffer.wrap(new byte[9]);
+        retval.put(ps.getPayload()[0]); //number
+        int len = Packet6882.getlen(ps.getPayload()[0]);
+        retval.putInt(len); //size?
+        retval.putInt(0); //unk
+        byte[] r = new byte[retval.position()];
+        retval.rewind();
+        retval.get(r);   
         Packet p = new Packet(Commands.UNKN6883, Commands.TELL, Commands.SERVER, ps.getPacketID(), datacount);
         this.addOutPacket(server, socket, p);
     }
@@ -739,7 +748,7 @@ class PacketHandler implements Runnable {
         this.broadcastAreaPlayerCnt(server, socket, area);
     }
     
-    //notify plaza
+    //notify plaza remove
     void broadcastPlazaRemove(ServerThread server, SocketChannel socket) {
         ByteBuffer retval = ByteBuffer.wrap(new byte[1024]);
         Client cl = clients.findClient(socket);
@@ -776,7 +785,7 @@ class PacketHandler implements Runnable {
         Packet p = new Packet(Commands.UNKN640d, Commands.TELL, Commands.SERVER, ps.getPacketID(), r);
         this.addOutPacket(server, socket, p); 
     }
-    
+        //should I broadcast 6890 periodically to sync players time?
         void send6890(ServerThread server, SocketChannel socket, Packet ps) {
         int sec = (int) (new Date().getTime()/1000);
         ByteBuffer r = ByteBuffer.wrap(new byte[4]);
@@ -805,17 +814,17 @@ class PacketHandler implements Runnable {
         
         //season? 
         //seems buggy
-        //should I broadcast 6892 with timer to sync players time?
+        //should I broadcast 6892 periodically to sync players time?
         void send6892(ServerThread server, SocketChannel socket, Packet ps) {
 
         ByteBuffer retval = ByteBuffer.wrap(new byte[1024]);
         int sec = (int) (new Date().getTime()/1000);
-        int inteval  = 6000;
+        int inteval  = 3600;
         //retval.putInt(sec%inteval); //current time?
         retval.putInt(sec); //current time?
         retval.putInt(inteval); //total length? tick count?
-        retval.putInt(3); //how many days to change season? (unk)
-        retval.putInt((int)(((sec%inteval*1.0)/inteval)*3)); //current season (0 = oragne, 1 = blue, 2 = green)?
+        retval.putInt((int)((((sec%inteval*1.0)%3)/inteval/3)*6)); //how many days left to change season? (max 5?) (unk)
+        retval.putInt((int)(((sec%inteval*1.0)/inteval)*3)); //current season (0 = orange, 1 = blue, 2 = green)?
         retval.putInt(0); //unk
         byte[] r = new byte[retval.position()];
         retval.rewind();
@@ -858,8 +867,9 @@ class PacketHandler implements Runnable {
         }else if(nr ==3){
             //percentage of observatory
             //temporary value
-            //Even if it exceeds 100%, the Elder Dragon Interception doesn't seem to work.
-            //But, Incorrect values cause a crash. and obviously relevant.
+            //Even if it exceeds 100%, It doesn't mean Elder Dragon Interception start automatically.
+            //it seems that it can be specified the time when Old dragon Interception is started and when it is finished.(each int32)
+            //Depending on the time, quest id specified at 0x2x?, 0x24? is activated.
             byte[] arr = new byte[0x29];
             retval.put(arr);
             retval.put((byte)20);
@@ -978,16 +988,12 @@ class PacketHandler implements Runnable {
 
     
 
-    //sends
-    //SetSendData16
-    //SetSendStringData
-    //recv 
-    //none
     //it might contain monster killing record for updating monster price
     void send6139(ServerThread server, SocketChannel socket, Packet ps) {
         //SetSendData16
         int nr = ps.getNumber(); //quest num
         //unk
+        //byte[] record = ps.getPayload();
         Packet p = new Packet(Commands.UNKN6139, Commands.TELL, Commands.SERVER, ps.getPacketID());
         this.addOutPacket(server, socket, p);
     }
@@ -1060,8 +1066,8 @@ class PacketHandler implements Runnable {
    
    void send68a1(ServerThread server, SocketChannel socket, Packet ps) {
        
-       byte[] name = "Testgame".getBytes();
-      
+        //byte[] name = "Testgame".getBytes();
+        byte[] name = "".getBytes();
         byte[] retval = new byte[name.length + 2];
         retval[0] = (byte) ((name.length >> 8)&0xff);
         retval[1] = (byte) (name.length &0xff);
@@ -1866,7 +1872,7 @@ class PacketHandler implements Runnable {
         broadcast.putShort((short) cl.getHNPair().getHandle().length);
         broadcast.put(cl.getHNPair().getHandle());
         byte[] mess = ps.getChatOutData();
-        Logging.println(new String(mess));
+        //Logging.println(new String(mess));
         broadcast.putShort((short) mess.length);
         broadcast.put(mess);
         
@@ -2276,6 +2282,7 @@ class PacketHandler implements Runnable {
         int slot = cl.getSlot();
         
         //TODO: here is sent more (different game modes). more tests!
+        //difficulty[2] = 50; //50 min for area pvp //temp
         difficulty[3] = slots.getDifficulty(area, room, slot);
         difficulty[4] = slots.getFriendlyFire(area, room, slot);
         Packet p = new Packet(Commands.GAMEDIFF, Commands.TELL, Commands.SERVER, ps.getPacketID(),difficulty);
@@ -2598,7 +2605,7 @@ class PacketHandler implements Runnable {
   
     
     //should test more
-    //search user with Conitionally
+    //search user with Conditionally
     void searchUserCond(ServerThread server, SocketChannel socket, Packet ps){
         int offset = 0;
         int len =0;
@@ -2721,7 +2728,7 @@ class PacketHandler implements Runnable {
     }
     
     //should test more
-    //search user with Conitionally
+    //search user with Conditionally
     void searchUserCondLand(ServerThread server, SocketChannel socket, Packet ps){
         int offset = 0;
         int len =0;
@@ -2763,7 +2770,7 @@ class PacketHandler implements Runnable {
     }
     
     //should test more
-    //search user with Conitionally
+    //search user with Conditionally
     //freeze when more than one search result
     void searchUserCondLand2(ServerThread server, SocketChannel socket, Packet ps){
         int offset = 0;
@@ -2811,7 +2818,7 @@ class PacketHandler implements Runnable {
     }
     
     //should test more
-    //search user with Conitionally
+    //search user with Conditionally
     void searchUserCondLand3(ServerThread server, SocketChannel socket, Packet ps){
         int offset = 0;
         int len =0;

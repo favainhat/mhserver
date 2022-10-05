@@ -1,12 +1,12 @@
 mhserver
 =====
-monster hunter(Playstation 2) private game server based on https://gitlab.com/gh0stl1ne/Bioserver1
+monster hunter(Playstation 2) server based on https://gitlab.com/gh0stl1ne/Bioserver1
 
 There are still many bugs to fix.
 
 Use this for MH2
 ```
-//Https Cert patch
+//Https cert patch
 patch=1,EE,D090940C,extended,0000000b
 patch=1,EE,2090940C,extended,0c24250f
 ```

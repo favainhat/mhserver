@@ -115,6 +115,7 @@ public class ClientList {
     }
     
     // find a client by its HR //temp
+    //Todo: rewrite
     public List<Client> findClientByHR(int hr1, int hr2) {
         List<Client> clList = new LinkedList();
         byte[] status;
@@ -135,7 +136,8 @@ public class ClientList {
         return null;
     }
     
-        //find a client by its Weapon //temp
+    //find a client by its Weapon //temp
+    //Todo: rewrite
     public List<Client> findClientByWeapon(int num) {
         List<Client> clList = new LinkedList();
         byte[] status;
