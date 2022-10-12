@@ -29,7 +29,7 @@ import java.util.List;
 public class Rooms {
     private List rooms;
     private int numberOfAreas;
-    private final int numberOfRooms = 10;
+    private final int numberOfRooms = 14;
 
     public Rooms(int numberOfAreas) {
         rooms = new LinkedList();
@@ -46,6 +46,10 @@ public class Rooms {
             rooms.add(new Room(i, "R8", Room.STATUS_ACTIVE));
             rooms.add(new Room(i, "R9", Room.STATUS_ACTIVE));
             rooms.add(new Room(i, "RA", Room.STATUS_ACTIVE));
+            rooms.add(new Room(i, "RB", Room.STATUS_ACTIVE));
+            rooms.add(new Room(i, "RC", Room.STATUS_ACTIVE));
+            rooms.add(new Room(i, "RD", Room.STATUS_ACTIVE));
+            rooms.add(new Room(i, "RE", Room.STATUS_ACTIVE));
         }
     }
     

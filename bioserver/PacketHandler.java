@@ -1209,7 +1209,7 @@ class PacketHandler implements Runnable {
     void broadcastAreaPlayerCnt(ServerThread server, SocketChannel socket, int nr) {
         byte[] areaplayercount = {0,0, 0,0, 0,0, (byte)0xff,(byte)0xff, 0,0};
         int[] cnt = clients.countPlayersInArea(nr);
-        cnt[2] = cnt[2] + clients.countPlayersInRoom(51, 0) + this.gameserverpackethandler.countInGamePlayers();    // TODO: check it
+        //cnt[2] = cnt[2] + clients.countPlayersInRoom(51, 0) + this.gameserverpackethandler.countInGamePlayers();    // TODO: check it
         int maxplayer = 200; // todo: move to proper position
         areaplayercount[0] = (byte) ((nr >> 8)&0xff);
         areaplayercount[1] = (byte) (nr &0xff);
@@ -1223,7 +1223,6 @@ class PacketHandler implements Runnable {
         areaplayercount[9] = (byte) (cnt[2] &0xff);
         
         Packet p = new Packet(Commands.AREAPLAYERCNT, Commands.BROADCAST, Commands.SERVER, this.getNextPacketID(), areaplayercount);
-        //this.broadcastInAreaNAreaSelect(server, p, nr);
         //this.broadcastInAreaNAreaSelect(server, p, nr);
         this.broadcastPacket(server,p);
     }
@@ -1323,6 +1322,7 @@ class PacketHandler implements Runnable {
         int cnt = clients.countPlayersInRoom(area, room);
         retval[2] = (byte)((cnt >> 8)& 0xff);
         retval[3] = (byte)(cnt & 0xff);
+        //todo: fix this
         cnt = this.gameserverpackethandler.countInGamePlayers() + clients.countPlayersInRoom(51, 0);    // TODO: agl counting room specific
         retval[4] = (byte)((cnt >> 8)& 0xff);
         retval[5] = (byte)(cnt & 0xff);
@@ -1340,6 +1340,7 @@ class PacketHandler implements Runnable {
         int cnt = clients.countPlayersInRoom(area, room);
         retval[2] = (byte)((cnt >> 8)& 0xff);
         retval[3] = (byte)(cnt & 0xff);
+        //todo: fix this
         cnt = this.gameserverpackethandler.countInGamePlayers() + clients.countPlayersInRoom(51, 0);    // TODO: agl counting room specific
         retval[4] = (byte)((cnt >> 8)& 0xff);
         retval[5] = (byte)(cnt & 0xff);
@@ -1437,6 +1438,7 @@ class PacketHandler implements Runnable {
         Packet p = new Packet(Commands.ENTERROOM, Commands.TELL, Commands.SERVER, ps.getPacketID(), retval);
         this.addOutPacket(server, socket, p);
         
+        this.broadcastAreaPlayerCnt(server, socket, area);
         this.broadcastRoomPlayerCnt(server, area, room);
         this.broadcastRoomPlayerComing(server,socket);
     }
@@ -1755,6 +1757,7 @@ class PacketHandler implements Runnable {
         
         Packet p = new Packet(Commands.EXITSLOTLIST, Commands.TELL, Commands.SERVER, ps.getPacketID());
         this.addOutPacket(server, socket, p);
+        this.broadcastAreaPlayerCnt(server, socket, area);
         this.broadcastRoomPlayerCnt(server, area, room);
     }
     //seems not exit area. but select area?
@@ -3078,6 +3081,7 @@ class PacketHandler implements Runnable {
                 }
 
                 // some broadcasting
+                this.broadcastAreaPlayerCnt(server, socket, area);
                 this.broadcastRoomPlayerCnt(server, area, room);
             }
         } catch (Exception e) {
@@ -3153,6 +3157,7 @@ class PacketHandler implements Runnable {
                 }
 
                 // some broadcasting
+                this.broadcastAreaPlayerCnt(server, socket, area);
                 this.broadcastRoomPlayerCnt(server, area, room);
                 
                 // close connection from server side

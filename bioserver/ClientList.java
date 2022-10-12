@@ -227,7 +227,6 @@ public class ClientList {
         for(int i = 0; i<clients.size(); i++) {
             client = (Client) clients.get(i);
             if(client.getArea()==area && client.getRoom()==room && client.getSlot() == slotnr) {
-            //if(client.getArea()==area && client.getRoom()==room) {                
                 retval.put(client.getHNPair().getHNPair());
                 retval.putShort((short)client.getCharacterStats().length);
                 retval.put(client.getCharacterStats());
@@ -305,20 +304,18 @@ public class ClientList {
     // count the players in a given area lobby
     public int[] countPlayersInArea(int nr) {
         // TODO: find out the unknown 3rd value. is it ingame ?
-        int retval[] = {0,0,0};     // arealobby, arearoom, ingame?
+        int retval[] = {0,0,0};     // lobby+inroom, inroom, lobby?
         for(int i=0; i<clients.size(); i++) {
             // right area
             if(((Client)clients.get(i)).getArea() == nr) {
                 // in lobby or in room ?
                 if(((Client)clients.get(i)).getRoom() == 0) {
                     retval[0]++;
+                    retval[2]++;
                 }
                 else {
-                    retval[1]++;
-                }
-            } else {
-                if (((Client)clients.get(i)).getArea() == 51) {
-                    retval[2]++;
+                    retval[0]++;
+                    retval[1]++; //I'm not sure what is this
                 }
             }
         }
