@@ -602,8 +602,6 @@ class PacketHandler implements Runnable {
         Packet p;
         byte[] chosen = new byte[8];
         HNPair hn = ps.getDecryptedHNpair();
-        //Logging.println("hn_nickname:" +new String(hn.getNickname()));
-        //Logging.println("hn_handle:" +new String(hn.getHandle()));
         
         // update client
         clients.findClient(socket).setHNPair(hn);
@@ -1312,6 +1310,40 @@ class PacketHandler implements Runnable {
         this.addOutPacket(server, socket, p);
     }
     
+    // Count players in given room not in quests
+    public int countPlayersInRoomNotIngame(int area, int room) {
+        int retval = 0;
+        Client cl;
+        for(int i = 0; i<clients.getList().size(); i++) {
+            cl = (Client) clients.getList().get(i);
+            if(cl.getArea() == area && cl.getRoom() == room){
+                Client gcl =  gameserverpackethandler.getClients().findClientBySession(cl.getsession());
+                if(gcl == null){
+                    retval++;
+                }else{
+                }
+            }
+        }
+        return retval;
+    }
+    
+    // Count players in given in quests.
+    public int countPlayersInRoomIngmae(int area, int room) {
+        int retval = 0;
+        Client cl;
+        for(int i = 0; i<clients.getList().size(); i++) {
+            cl = (Client) clients.getList().get(i);
+            if(cl.getArea() == area && cl.getRoom() == room){
+                Client gcl =  gameserverpackethandler.getClients().findClientBySession(cl.getsession());
+                if(gcl == null){
+                }else{
+                    retval++;
+                }
+            }
+        }
+        return retval;
+    }
+
     void sendRoomPlayerCnt(ServerThread server, SocketChannel socket, Packet ps) {
         int area = clients.findClient(socket).getArea();
         int room = ps.getNumber();
@@ -1322,8 +1354,8 @@ class PacketHandler implements Runnable {
         int cnt = clients.countPlayersInRoom(area, room);
         retval[2] = (byte)((cnt >> 8)& 0xff);
         retval[3] = (byte)(cnt & 0xff);
-        //todo: fix this
-        cnt = this.gameserverpackethandler.countInGamePlayers() + clients.countPlayersInRoom(51, 0);    // TODO: agl counting room specific
+        //cnt = this.gameserverpackethandler.countInGamePlayers() + clients.countPlayersInRoom(51, 0);    // TODO: agl counting room specific
+        cnt =  countPlayersInRoomIngmae(area, room);
         retval[4] = (byte)((cnt >> 8)& 0xff);
         retval[5] = (byte)(cnt & 0xff);
         int maxplayer = 10; // todo: move to proper position
@@ -1340,8 +1372,8 @@ class PacketHandler implements Runnable {
         int cnt = clients.countPlayersInRoom(area, room);
         retval[2] = (byte)((cnt >> 8)& 0xff);
         retval[3] = (byte)(cnt & 0xff);
-        //todo: fix this
-        cnt = this.gameserverpackethandler.countInGamePlayers() + clients.countPlayersInRoom(51, 0);    // TODO: agl counting room specific
+        //cnt = this.gameserverpackethandler.countInGamePlayers() + clients.countPlayersInRoom(51, 0);    // TODO: agl counting room specific
+        cnt =  countPlayersInRoomIngmae(area, room);
         retval[4] = (byte)((cnt >> 8)& 0xff);
         retval[5] = (byte)(cnt & 0xff);
         int maxplayer = 10; // todo: move to proper position
