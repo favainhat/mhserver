@@ -292,6 +292,33 @@ public class ClientList {
         return retval;
     }
 
+    // Count players in given room
+    public int countPlayersInRoomNotIngame(int area, int room) {
+        int retval = 0;
+        for(int i = 0; i<clients.size(); i++) {
+            client = (Client) clients.get(i);
+            if(client.getArea() == area && client.getRoom() == room) {
+                if(client.gamenumber == 0){
+                    retval++;
+                }
+            }
+        }
+        return retval;
+    }
+    // Count players in given room
+    public int countPlayersInRoomIngmae(int area, int room) {
+        int retval = 0;
+        for(int i = 0; i<clients.size(); i++) {
+            client = (Client) clients.get(i);
+            if(client.getArea() == area && client.getRoom() == room) {
+                if(client.gamenumber != 0){
+                    retval++;
+                }
+            }
+        }
+        return retval;
+    }
+
     // count players in a given meeting room
     public byte getPlayerCountAgl(int nr) {
         byte retval = 0;
