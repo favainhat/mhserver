@@ -444,8 +444,13 @@ class PacketHandler implements Runnable {
                         cl.connalive = false;
                         queue.add(new ServerDataEvent(server, cl.getSocket(), p.getPacketData()));
                     } else {
+                        Client gcl =  gameserverpackethandler.getClients().findClientBySession(cl.getsession());
+                        if(gcl == null){
                             // this client left us :-(
                             this.removeClient(server, cl);
+                        }else{
+                            cl.connalive = true;
+                        }
                     }
                 }
             }
@@ -495,7 +500,7 @@ class PacketHandler implements Runnable {
         this.addOutPacket(server, socket, p);
     }
 
-    boolean check_session(ServerThread server, SocketChannel socket, Packet p) {
+        boolean check_session(ServerThread server, SocketChannel socket, Packet p) {
         int seed  = p.getPacketID();
         int sessA =  ((int) p.getPayload()[2]  - 0x30)*10000
                     +((int) p.getPayload()[3]  - 0x30)*1000
@@ -514,6 +519,7 @@ class PacketHandler implements Runnable {
         
         // session check is OK, a user with this session is in database
         if(!"".equals(userid)) {
+            /*
             // kill old connections of this client
             cl = clients.findClient(userid);
             if(cl != null) {
@@ -531,6 +537,16 @@ class PacketHandler implements Runnable {
             // setup client object for this user/session
             clients.add((new Client(socket, userid, session)));
             cl = clients.findClient(socket);
+            */
+            //Let's just reuse session
+            cl = clients.findClient(userid);
+            if(cl == null){
+                clients.add((new Client(socket, userid, session)));
+                cl = clients.findClient(socket);
+            }else{
+                cl.setSocket(socket);
+                cl.connalive = true;
+            }
             db.updateClientOrigin(userid, STATUS_LOBBY, 0, 0, 0);
 
             int gamenr = db.getGameNumber(cl.getUserID());
@@ -549,6 +565,7 @@ class PacketHandler implements Runnable {
             return(false);
         }        
     }
+
     
     // after the client returns his answer to the servers login query
     // 0x708 = 1800 = 30 min in seconds

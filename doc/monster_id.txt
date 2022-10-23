@@ -1,0 +1,76 @@
+Monsters	
+ID	NAME
+00	UNK
+01	Rathian
+02	Fatalis
+03	Kelbi
+04	Mosswine
+05	Bullfango
+06	Yian Kut-Ku
+07	Lao-Shan Lung
+08	Cephadrome
+09	Felyne
+0A	Veggie Elder
+0B	Rathalos
+0C	Aptonoth
+0D	Genprey
+0E	Diablos
+0F	Khezu
+10	Velociprey
+11	Gravios
+12	Felyne?
+13	Vespoid
+14	Gypceros
+15	Plesioth
+16	Basarios
+17	Melynx
+18	Hornetaur
+19	Apceros
+1A	Monoblos
+1B	Velocidrome
+1C	Gendrome
+1D	Rocks
+1E	Ioprey
+1F	Iodrome
+20	Pugis
+21	Kirin
+22	Cephalos
+23	Giaprey
+24	Crimson Fatalis
+25	Pink Rathian
+26	Blue Yian Kut-Ku
+27	Purple Gypceros
+28	Yian Garuga
+29	Silver Rathalos
+2A	Gold Rathian
+2B	Black Diablos
+2C	White Monoblos
+2D	Red Khezu
+2E	Green Plesioth
+2F	Black Gravios
+30	Daimyo Hermitaur
+31	Azure Rathalos
+32	Ashen Lao-Shan Lung
+33	Blangonga
+34	Congalala
+35	Rajang
+36	Kushala Daora
+37	Shen Gaoren
+38	Great Thunderbug
+39	Shakalaka
+3A	Yama Tsukami
+3B	Chameleos
+3C	Rusted Kushala Daora
+3D	Blango
+3E	Conga
+3F	Remobra
+40	Lunastra
+41	Teostra
+42	Hermitaur
+43	Shogun Ceanataur
+44	Bulldrome
+45	Anteka
+46	Popo
+47	White Fatalis
+48	Yama Tsukami
+49	Ceanataur
