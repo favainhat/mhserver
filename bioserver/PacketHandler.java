@@ -864,6 +864,24 @@ class PacketHandler implements Runnable {
         if(nr ==0){
             //wanted
             //need more investigate
+            //saved in little endian
+
+            //wanted structure
+            //01 00  //unk
+            //06 00 //Target
+            //02 00 //Do things
+            //05 05 //price
+
+
+            //00 00 00 00 //first 4bytes(unknown)
+            
+            //season0 pub wanted
+            //season1 pub wanted
+            //season2 pub wanted
+            
+            //season0 Great Elder wanted
+            //season1 Great Elder wanted
+            //season2 Great Elder wanted
 
         }else if(nr == 1){
             //monster price
@@ -875,16 +893,32 @@ class PacketHandler implements Runnable {
         }else if(nr == 2){
             //monster price changes
             //temporary value
+            
+            //guess                    
+            //changes%8 = low = 0~1, mid = 2~3, high = 4~7
+            //(change/8)%4 = none = 0, up = 1,3 ,down = 2
+
+            //so possible combination shoud in 0~23
+            //priceRange (low = 0~1, mid = 2~3, high = 4~7)
+            //upDown (none = 0, up = 1 ,down = 2)            
+
             for(int i= 0;i<monster_price.length;i++){
                 byte changes = (byte)0xff;
+                //byte changes = (byte)(upDown[i] * 8 + priceRange[i])
                 retval.put(changes);                
             }
         }else if(nr ==3){
             //percentage of observatory
             //temporary value
-            //Even if it exceeds 100%, It doesn't mean Elder Dragon Interception start automatically.
+            //Even if it exceeds 100%, It doesn't mean Elder Dragon Interception is start.
             //it seems that it can be specified the time when Old dragon Interception is started and when it is finished.(each int32)
-            //Depending on the time, quest id specified at 0x2x?, 0x24? is activated.
+            //Depending on the time, quest id specified at 0x22? for pub, 0x2x? for Great Elder is activated.
+
+            //temp value
+            //00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+            //00 00 00 00 00 00 00 00 00 00 01 01 01 01 01 01
+            //00 00 22 4E 23 4E 24 4E 00 64 20
+
             byte[] arr = new byte[0x29];
             retval.put(arr);
             retval.put((byte)20);
@@ -1005,10 +1039,24 @@ class PacketHandler implements Runnable {
 
     //it might contain monster killing record for updating monster price
     void send6139(ServerThread server, SocketChannel socket, Packet ps) {
-        //SetSendData16
-        int nr = ps.getNumber(); //quest num
         //unk
+        
+        //guessing.
+        //0-11 12 byte header + killed count + capture count?
+        //222-12 = 210, 210/2 = 105
+        //so 105 bytes for each?
+
+        //todo: complete this
+
         //byte[] record = ps.getPayload();
+        //header
+        //int unk = (((int) record[0] << 8)&0xFF00) | ((int) record[1] &0xFF);
+        //int questid = (((int) record[2] << 8)&0xFF00) | ((int) record[3] &0xFF);
+        
+        //kill counts
+        
+        //capture count
+
         Packet p = new Packet(Commands.UNKN6139, Commands.TELL, Commands.SERVER, ps.getPacketID());
         this.addOutPacket(server, socket, p);
     }
