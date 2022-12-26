@@ -867,9 +867,9 @@ class PacketHandler implements Runnable {
             //saved in little endian
 
             //wanted structure
-            //01 00  //unk
+            //01 00  //quest type(01:kill,02:capture,03:item)
             //06 00 //Target
-            //02 00 //Do things
+            //02 00 //Do N times
             //05 05 //price
 
 
@@ -883,6 +883,8 @@ class PacketHandler implements Runnable {
             //season1 Great Elder wanted
             //season2 Great Elder wanted
 
+            //Might WTD extra fee is set by 0xb96 to 0xb97 in area.bin?
+            //Target A is Boss, Target B is small monster, Target C is item
         }else if(nr == 1){
             //monster price
             //temporary value
