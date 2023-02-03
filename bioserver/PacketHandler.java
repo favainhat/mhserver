@@ -739,7 +739,7 @@ class PacketHandler implements Runnable {
         byte[] r = new byte[retval.position()];
         retval.rewind();
         retval.get(r);   
-        Packet p = new Packet(Commands.UNKN6883, Commands.TELL, Commands.SERVER, ps.getPacketID(), datacount);
+        Packet p = new Packet(Commands.UNKN6883, Commands.TELL, Commands.SERVER, ps.getPacketID(), r);
         this.addOutPacket(server, socket, p);
     }
     

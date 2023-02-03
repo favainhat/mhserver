@@ -27,3 +27,5 @@ I made note for it. See the source. (Of course there are areaG.bin and areaDos.b
 - area description text cropped.
 - Online mark in MH2 is not yet supported and also friend search.
 - PVP Arena is not expected to work.
+
+This project is not maintained anymore.
